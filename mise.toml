@@ -1,4 +1,5 @@
 [tools]
 go = "latest"
 "go:github.com/spf13/cobra-cli" = "latest"
+prettier = "latest"
 staticcheck = "latest"

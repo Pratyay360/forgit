@@ -1,0 +1,189 @@
+package operations
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/BurntSushi/toml"
+)
+
+// Config holds credentials and settings for every supported forge.
+type Config struct {
+	GitHub    GitHubConfig    `toml:"github"`
+	GitLab    GitLabConfig    `toml:"gitlab"`
+	Forgejo   ForgejoConfig   `toml:"forgejo"`
+	SourceHut SourceHutConfig `toml:"sourcehut"`
+	Bitbucket BitbucketConfig `toml:"bitbucket"`
+
+	// Instances holds additional instances of any forge type. Each entry must
+	// set Type (github, gitlab, forgejo, sourcehut, bitbucket) and Name.
+	Instances []Instance `toml:"instance"`
+}
+
+// Instance describes a single forge server/account. It is used for multiple
+// instances of the same forge type (e.g. two self-hosted GitLab servers).
+type Instance struct {
+	Name     string `toml:"name"`
+	Type     string `toml:"type"`
+	Token    string `toml:"token"`
+	URL      string `toml:"url"`
+	Username string `toml:"username"`
+}
+
+// GitHubConfig holds GitHub credentials.
+type GitHubConfig struct {
+	Token string `toml:"token"`
+}
+
+// GitLabConfig holds GitLab credentials. URL is optional and defaults to the
+// public gitlab.com instance.
+type GitLabConfig struct {
+	Token string `toml:"token"`
+	URL   string `toml:"url"`
+}
+
+// ForgejoConfig holds Forgejo credentials and the optional server base URL.
+type ForgejoConfig struct {
+	Token string `toml:"token"`
+	URL   string `toml:"url"`
+}
+
+// SourceHutConfig holds SourceHut credentials. The username is required
+// because the git.sr.ht and todo.sr.ht APIs are scoped per user.
+type SourceHutConfig struct {
+	Token    string `toml:"token"`
+	Username string `toml:"username"`
+}
+
+// BitbucketConfig holds Bitbucket credentials. The username is the account or
+// workspace used to scope repository listings.
+type BitbucketConfig struct {
+	Token    string `toml:"token"`
+	Username string `toml:"username"`
+}
+
+// Environment variables override the config file. FORGE_CONFIG overrides the
+// config file location itself.
+const (
+	EnvConfigPath        = "FORGE_CONFIG"
+	EnvGitHubToken       = "FORGE_GITHUB_TOKEN"
+	EnvGitLabToken       = "FORGE_GITLAB_TOKEN"
+	EnvGitLabURL         = "FORGE_GITLAB_URL"
+	EnvForgejoToken      = "FORGE_FORGEJO_TOKEN"
+	EnvForgejoURL        = "FORGE_FORGEJO_URL"
+	EnvSourceHutToken    = "FORGE_SOURCEHUT_TOKEN"
+	EnvSourceHutUsername = "FORGE_SOURCEHUT_USERNAME"
+	EnvBitbucketToken    = "FORGE_BITBUCKET_TOKEN"
+	EnvBitbucketUsername = "FORGE_BITBUCKET_USERNAME"
+)
+
+// DefaultConfigPath returns the default config file location (~/.forge.toml).
+func DefaultConfigPath() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("determining home directory: %w", err)
+	}
+	return filepath.Join(home, ".forge.toml"), nil
+}
+
+// ResolveConfigPath returns the config path from a --config flag, the
+// FORGE_CONFIG environment variable, or the default location, in that order.
+func ResolveConfigPath(flagValue string) (string, error) {
+	if flagValue != "" {
+		return flagValue, nil
+	}
+	if p := os.Getenv(EnvConfigPath); p != "" {
+		return p, nil
+	}
+	return DefaultConfigPath()
+}
+
+// LoadConfig reads the TOML config file (if it exists) and applies environment
+// variable overrides on top. A missing file is not an error; it simply yields a
+// config populated from the environment.
+func LoadConfig(path string) (Config, error) {
+	var cfg Config
+	if _, err := toml.DecodeFile(path, &cfg); err != nil {
+		if !os.IsNotExist(err) {
+			return cfg, fmt.Errorf("reading config %s: %w", path, err)
+		}
+	}
+	applyEnv(&cfg)
+	return cfg, nil
+}
+
+func applyEnv(cfg *Config) {
+	if v := os.Getenv(EnvGitHubToken); v != "" {
+		cfg.GitHub.Token = v
+	}
+	if v := os.Getenv(EnvGitLabToken); v != "" {
+		cfg.GitLab.Token = v
+	}
+	if v := os.Getenv(EnvGitLabURL); v != "" {
+		cfg.GitLab.URL = v
+	}
+	if v := os.Getenv(EnvForgejoToken); v != "" {
+		cfg.Forgejo.Token = v
+	}
+	if v := os.Getenv(EnvForgejoURL); v != "" {
+		cfg.Forgejo.URL = v
+	}
+	if v := os.Getenv(EnvSourceHutToken); v != "" {
+		cfg.SourceHut.Token = v
+	}
+	if v := os.Getenv(EnvSourceHutUsername); v != "" {
+		cfg.SourceHut.Username = v
+	}
+	if v := os.Getenv(EnvBitbucketToken); v != "" {
+		cfg.Bitbucket.Token = v
+	}
+	if v := os.Getenv(EnvBitbucketUsername); v != "" {
+		cfg.Bitbucket.Username = v
+	}
+}
+
+// Enabled reports whether any forge has credentials configured.
+func (c Config) Enabled() bool {
+	return c.GitHub.Token != "" ||
+		c.GitLab.Token != "" ||
+		c.Forgejo.Token != "" ||
+		c.SourceHut.Token != "" ||
+		c.Bitbucket.Token != "" ||
+		anyInstance(c.Instances, func(i Instance) bool { return i.Token != "" })
+}
+
+// All returns every configured instance: the per-forge sections (named after
+// the forge type) followed by the [[instance]] entries. Sections with no token
+// are skipped; [[instance]] entries without a name fall back to their type and
+// entries without a token are skipped.
+func (c Config) All() []Instance {
+	out := make([]Instance, 0, 5+len(c.Instances))
+	add := func(i Instance) {
+		if i.Token == "" {
+			return
+		}
+		if i.Name == "" {
+			i.Name = i.Type
+		}
+		out = append(out, i)
+	}
+	add(Instance{Type: "github", Name: "github", Token: c.GitHub.Token})
+	add(Instance{Type: "gitlab", Name: "gitlab", Token: c.GitLab.Token, URL: c.GitLab.URL})
+	add(Instance{Type: "forgejo", Name: "forgejo", Token: c.Forgejo.Token, URL: c.Forgejo.URL})
+	add(Instance{Type: "sourcehut", Name: "sourcehut", Token: c.SourceHut.Token, Username: c.SourceHut.Username})
+	add(Instance{Type: "bitbucket", Name: "bitbucket", Token: c.Bitbucket.Token, Username: c.Bitbucket.Username})
+	for _, i := range c.Instances {
+		add(i)
+	}
+	return out
+}
+
+func anyInstance(instances []Instance, f func(Instance) bool) bool {
+	for _, i := range instances {
+		if f(i) {
+			return true
+		}
+	}
+	return false
+}
