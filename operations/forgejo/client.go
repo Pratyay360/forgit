@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	fj "codeberg.org/mvdkleijn/forgejo-sdk/forgejo"
+	fj "codeberg.org/mvdkleijn/forgejo-sdk/forgejo/v3"
 	"github.com/pratyay360/forgit/operations"
 )
 
