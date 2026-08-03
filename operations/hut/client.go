@@ -18,7 +18,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pratyay360/forge/v1/operations"
+	"github.com/pratyay360/forge/operations"
 )
 
 // GraphQL endpoints per service (overridable so tests can point the client
@@ -315,16 +315,110 @@ func (c *Client) DeleteRepo(ctx context.Context, fullName string) error {
 	return nil
 }
 
-// ListRuns returns ErrNotSupported: builds.sr.ht jobs are surfaced through a
-// separate service not covered by this client.
+// buildsAPIBase is the builds.sr.ht GraphQL endpoint.
+var buildsAPIBase = "https://builds.sr.ht/query"
+
+const jobsQuery = `query($cursor: Cursor) {
+  me {
+    username
+    jobs(cursor: $cursor) {
+      results { id status note tags }
+      cursor
+    }
+  }
+}`
+
+// ListRuns returns builds.sr.ht jobs associated with a repository.
+// fullName is user/name.
+//
+// builds.sr.ht jobs are owned by a user, not by a repository: the GraphQL API
+// offers no per-repository job query. Jobs submitted by git.sr.ht carry the
+// repository name as one of their tags, so the authenticated user's jobs are
+// listed and filtered on that tag. Manually submitted jobs that do not tag the
+// repository are therefore not reported.
 func (c *Client) ListRuns(ctx context.Context, fullName string) ([]operations.Run, error) {
-	return nil, fmt.Errorf("%w: sourcehut builds are not covered by this client", operations.ErrNotSupported)
+	_, name, ok := splitHutName(fullName)
+	if !ok {
+		return nil, fmt.Errorf("invalid repository name %q", fullName)
+	}
+	var out []operations.Run
+	var cursor *string
+	username := ""
+	pages := 0
+	for {
+		pages++
+		if pages > maxPages {
+			return nil, fmt.Errorf("listing builds: %w", errStuckCursor)
+		}
+		var page struct {
+			Me struct {
+				Username string `json:"username"`
+				Jobs     struct {
+					Results []struct {
+						ID     int64    `json:"id"`
+						Status string   `json:"status"`
+						Note   string   `json:"note"`
+						Tags   []string `json:"tags"`
+					} `json:"results"`
+					Cursor *string `json:"cursor"`
+				} `json:"jobs"`
+			} `json:"me"`
+		}
+		if err := c.query(ctx, buildsAPIBase, gqlRequest{
+			Query:     jobsQuery,
+			Variables: map[string]any{"cursor": cursor},
+		}, &page); err != nil {
+			return nil, fmt.Errorf("listing builds: %w", err)
+		}
+		if username == "" {
+			username = stripTilde(page.Me.Username)
+		}
+		for _, j := range page.Me.Jobs.Results {
+			if !taggedWith(j.Tags, name) {
+				continue
+			}
+			out = append(out, operations.Run{
+				Forge:    "sourcehut",
+				Instance: c.Name(),
+				Repo:     fullName,
+				ID:       j.ID,
+				Name:     jobName(j.Note, j.Tags),
+				Status:   strings.ToLower(j.Status),
+				URL:      fmt.Sprintf("https://builds.sr.ht/~%s/job/%d", username, j.ID),
+			})
+		}
+		cursor = page.Me.Jobs.Cursor
+		if cursor == nil {
+			return out, nil
+		}
+	}
+}
+
+// taggedWith reports whether any tag matches the repository name. Tags are
+// compared case-sensitively, as sourcehut repository names are.
+func taggedWith(tags []string, name string) bool {
+	for _, t := range tags {
+		if t == name {
+			return true
+		}
+	}
+	return false
+}
+
+// jobName labels a build from its note (first line) or, failing that, its tags.
+func jobName(note string, tags []string) string {
+	if line := strings.TrimSpace(strings.SplitN(note, "\n", 2)[0]); line != "" {
+		return line
+	}
+	return strings.Join(tags, "/")
 }
 
 // ListWorkflows returns ErrNotSupported: sourcehut has no workflow-definition
-// concept.
+// concept. Build manifests (.build.yml) are submitted per job rather than
+// registered on the repository, so there is nothing to enumerate; the jobs
+// themselves are reported by ListRuns.
 func (c *Client) ListWorkflows(ctx context.Context, fullName string) ([]operations.Workflow, error) {
-	return nil, fmt.Errorf("%w: sourcehut has no workflow definitions", operations.ErrNotSupported)
+	return nil, fmt.Errorf("%w: sourcehut has no workflow definitions; see runs (builds)", operations.ErrNotSupported)
 }
 
 // ListProjects returns ErrNotSupported: sourcehut has no project concept

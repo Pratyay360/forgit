@@ -1,9 +1,12 @@
 package operations
 
 import (
+	"bytes"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 )
@@ -78,13 +81,12 @@ const (
 	EnvBitbucketUsername = "FORGE_BITBUCKET_USERNAME"
 )
 
-// DefaultConfigPath returns the default config file location (~/.forge.toml).
 func DefaultConfigPath() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("determining home directory: %w", err)
 	}
-	return filepath.Join(home, ".forge.toml"), nil
+	return filepath.Join(home, ".config/forge/config.toml"), nil
 }
 
 // ResolveConfigPath returns the config path from a --config flag, the
@@ -110,7 +112,64 @@ func LoadConfig(path string) (Config, error) {
 		}
 	}
 	applyEnv(&cfg)
+	if err := resolveTokens(&cfg); err != nil {
+		return cfg, err
+	}
 	return cfg, nil
+}
+
+func resolveTokens(cfg *Config) error {
+	var err error
+	cfg.GitHub.Token, err = resolveToken(cfg.GitHub.Token)
+	if err != nil {
+		return err
+	}
+	cfg.GitLab.Token, err = resolveToken(cfg.GitLab.Token)
+	if err != nil {
+		return err
+	}
+	cfg.Forgejo.Token, err = resolveToken(cfg.Forgejo.Token)
+	if err != nil {
+		return err
+	}
+	cfg.SourceHut.Token, err = resolveToken(cfg.SourceHut.Token)
+	if err != nil {
+		return err
+	}
+	cfg.Bitbucket.Token, err = resolveToken(cfg.Bitbucket.Token)
+	if err != nil {
+		return err
+	}
+	for i := range cfg.Instances {
+		cfg.Instances[i].Token, err = resolveToken(cfg.Instances[i].Token)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func resolveToken(token string) (string, error) {
+	if token == "" {
+		return "", nil
+	}
+	isCommand := strings.Contains(token, " ") ||
+		strings.Contains(token, "$") ||
+		strings.HasPrefix(token, "echo") ||
+		strings.ContainsAny(token, "|&;<>()`\\")
+
+	if !isCommand {
+		return token, nil
+	}
+
+	cmd := exec.Command("/bin/sh", "-c", token)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("evaluating token command %q: %w (stderr: %q)", token, err, stderr.String())
+	}
+	return strings.TrimSpace(stdout.String()), nil
 }
 
 func applyEnv(cfg *Config) {

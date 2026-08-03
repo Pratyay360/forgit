@@ -3,17 +3,24 @@ package forgejo
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
 	"os"
+	"path"
 	"strings"
+	"time"
 
 	fj "codeberg.org/mvdkleijn/forgejo-sdk/forgejo"
-	"github.com/pratyay360/forge/v1/operations"
+	"github.com/pratyay360/forge/operations"
 )
 
-// Client talks to a Forgejo instance on behalf of the authenticated user.
 type Client struct {
 	inner    *fj.Client
+	baseURL  string
+	token    string
+	http     *http.Client
 	instance string
 }
 
@@ -23,11 +30,17 @@ func New(cfg operations.ForgejoConfig) (*Client, error) {
 	if base == "" {
 		base = "https://codeberg.org"
 	}
+	base = strings.TrimRight(base, "/")
 	c, err := fj.NewClient(base, fj.SetToken(cfg.Token))
 	if err != nil {
 		return nil, fmt.Errorf("creating client: %w", err)
 	}
-	return &Client{inner: c}, nil
+	return &Client{
+		inner:   c,
+		baseURL: base,
+		token:   cfg.Token,
+		http:    &http.Client{Timeout: 30 * time.Second},
+	}, nil
 }
 
 // SetInstance names this client's instance (default: the forge type).
@@ -144,22 +157,139 @@ func (c *Client) SetVisibility(ctx context.Context, fullName string, private boo
 	}, nil
 }
 
-// ListRuns returns ErrNotSupported: the forgejo-sdk in use does not expose
-// the Actions run API.
+// getAPI performs a GET against the instance's /api/v1 surface and decodes
+// the JSON body into out. Used for endpoints the SDK does not expose.
+func (c *Client) getAPI(ctx context.Context, endpoint string, out any) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/api/v1"+endpoint, nil)
+	if err != nil {
+		return err
+	}
+	if c.token != "" {
+		req.Header.Set("Authorization", "token "+c.token)
+	}
+	req.Header.Set("Accept", "application/json")
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("forgejo API %s: %s", endpoint, resp.Status)
+	}
+	return json.NewDecoder(resp.Body).Decode(out)
+}
+
+// ListRuns lists Actions task runs for a repository. fullName is owner/name.
+//
+// The SDK does not wrap the Actions API, so /repos/{owner}/{repo}/actions/tasks
+// is called directly. Tasks carry the workflow name, branch and run number,
+// which map onto the unified Run shape.
 func (c *Client) ListRuns(ctx context.Context, fullName string) ([]operations.Run, error) {
-	return nil, fmt.Errorf("%w: forgejo actions runs are not exposed by the SDK", operations.ErrNotSupported)
+	owner, name, ok := splitFullName(fullName)
+	if !ok {
+		return nil, fmt.Errorf("invalid repository name %q", fullName)
+	}
+	var body struct {
+		Entries []struct {
+			ID           int64  `json:"id"`
+			Name         string `json:"name"`
+			DisplayTitle string `json:"display_title"`
+			Status       string `json:"status"`
+			HeadBranch   string `json:"head_branch"`
+			URL          string `json:"url"`
+		} `json:"workflow_runs"`
+	}
+	endpoint := fmt.Sprintf("/repos/%s/%s/actions/tasks?limit=50",
+		url.PathEscape(owner), url.PathEscape(name))
+	if err := c.getAPI(ctx, endpoint, &body); err != nil {
+		return nil, fmt.Errorf("listing action runs: %w", err)
+	}
+	out := make([]operations.Run, 0, len(body.Entries))
+	for _, t := range body.Entries {
+		title := t.Name
+		if title == "" {
+			title = t.DisplayTitle
+		}
+		out = append(out, operations.Run{
+			Forge:    "forgejo",
+			Instance: c.Name(),
+			Repo:     fullName,
+			ID:       t.ID,
+			Name:     title,
+			Status:   t.Status,
+			Branch:   t.HeadBranch,
+			URL:      t.URL,
+		})
+	}
+	return out, nil
 }
 
-// ListWorkflows returns ErrNotSupported: forgejo has no workflow-definition
-// concept surfaced by the SDK.
+// workflowDirs are the directories Forgejo scans for Actions workflow
+// definitions, in precedence order.
+var workflowDirs = []string{".forgejo/workflows", ".github/workflows"}
+
+// ListWorkflows lists Actions workflow definitions for a repository.
+// fullName is owner/name.
+//
+// Forgejo has no endpoint that enumerates workflows (unlike GitHub's
+// /actions/workflows), so the workflow directories are listed from the default
+// branch instead. Forgejo reads .forgejo/workflows first and falls back to
+// .github/workflows; both are reported here, deduplicated by file name.
 func (c *Client) ListWorkflows(ctx context.Context, fullName string) ([]operations.Workflow, error) {
-	return nil, fmt.Errorf("%w: forgejo has no workflow definitions", operations.ErrNotSupported)
+	owner, name, ok := splitFullName(fullName)
+	if !ok {
+		return nil, fmt.Errorf("invalid repository name %q", fullName)
+	}
+	var out []operations.Workflow
+	seen := make(map[string]bool)
+	found := false
+	for _, dir := range workflowDirs {
+		entries, _, err := c.inner.ListContents(owner, name, "", dir)
+		if err != nil {
+			// A missing directory is normal; only one of the two is common.
+			continue
+		}
+		found = true
+		for _, e := range entries {
+			if e == nil || e.Type != "file" || !isWorkflowFile(e.Name) || seen[e.Name] {
+				continue
+			}
+			seen[e.Name] = true
+			link := ""
+			if e.HTMLURL != nil {
+				link = *e.HTMLURL
+			}
+			out = append(out, operations.Workflow{
+				Forge:    "forgejo",
+				Instance: c.Name(),
+				Repo:     fullName,
+				Name:     e.Name,
+				State:    "active",
+				URL:      link,
+			})
+		}
+	}
+	if !found {
+		return nil, fmt.Errorf("listing workflows: no workflow directory (%s) in %s",
+			strings.Join(workflowDirs, " or "), fullName)
+	}
+	return out, nil
 }
 
-// ListProjects returns ErrNotSupported: the forgejo-sdk in use does not
-// expose the Projects (board) API.
+// isWorkflowFile reports whether a file name is an Actions workflow manifest.
+func isWorkflowFile(name string) bool {
+	switch strings.ToLower(path.Ext(name)) {
+	case ".yml", ".yaml":
+		return true
+	}
+	return false
+}
+
+// ListProjects returns ErrNotSupported: Forgejo has no projects/boards API.
+// The web UI has no project boards either, so there is nothing to enumerate;
+// issues and pull requests remain available.
 func (c *Client) ListProjects(ctx context.Context) ([]operations.Project, error) {
-	return nil, fmt.Errorf("%w: forgejo projects are not exposed by the SDK", operations.ErrNotSupported)
+	return nil, fmt.Errorf("%w: forgejo has no projects API", operations.ErrNotSupported)
 }
 
 // ListIssues returns open issues assigned to the authenticated user.

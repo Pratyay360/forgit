@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/google/go-github/v89/github"
-	"github.com/pratyay360/forge/v1/operations"
+	"github.com/pratyay360/forge/operations"
 )
 
 // Client talks to the GitHub API on behalf of the authenticated user.

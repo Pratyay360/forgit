@@ -8,7 +8,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/pratyay360/forge/v1/operations"
+	"github.com/pratyay360/forge/operations"
 	"github.com/spf13/cobra"
 )
 

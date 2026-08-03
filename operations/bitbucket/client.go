@@ -2,6 +2,7 @@
 // The go-bitbucket SDK is awkward for listing issues and pull requests
 // (it returns untyped interface{}), so this client talks to the API directly
 // using the app-password style basic auth.
+
 package bitbucket
 
 import (
@@ -17,7 +18,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pratyay360/forge/v1/operations"
+	"github.com/pratyay360/forge/operations"
 )
 
 // apiBase is overridable so tests can point the client at an httptest server.
@@ -137,10 +138,34 @@ func (c *Client) CreateRepo(ctx context.Context, in operations.RepoInput) (opera
 	}, nil
 }
 
-// RenameRepo renames a repository by recreating it under a new slug. Bitbucket
-// has no rename endpoint; the repository is copied and the original deleted.
+// RenameRepo renames a repository. fullName is workspace/repo.
+//
+// Bitbucket has no dedicated rename endpoint; PUT on the repository accepts a
+// new name and re-slugifies the location (the new URL comes back in the
+// Location header, and in the body's full_name). The slug is derived from the
+// name, so the request fails if the resulting slug collides with an existing
+// repository in the workspace.
 func (c *Client) RenameRepo(ctx context.Context, fullName, newName string) (operations.Repo, error) {
-	return operations.Repo{}, fmt.Errorf("%w: bitbucket has no repository rename API; delete and recreate under %q instead", operations.ErrNotSupported, newName)
+	var body struct {
+		FullName  string `json:"full_name"`
+		IsPrivate bool   `json:"is_private"`
+		Links     struct {
+			HTML struct {
+				Href string `json:"href"`
+			} `json:"html"`
+		} `json:"links"`
+	}
+	u := fmt.Sprintf("%s/repositories/%s", apiBase, fullNamePath(fullName))
+	if err := c.put(ctx, u, map[string]any{"name": newName}, &body); err != nil {
+		return operations.Repo{}, fmt.Errorf("renaming repository: %w", err)
+	}
+	return operations.Repo{
+		Forge:    "bitbucket",
+		Instance: c.Name(),
+		FullName: body.FullName,
+		URL:      body.Links.HTML.Href,
+		Private:  body.IsPrivate,
+	}, nil
 }
 
 // DeleteRepo deletes a repository. fullName is workspace/repo.

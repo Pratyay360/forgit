@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/pratyay360/forge/v1/operations"
+	"github.com/pratyay360/forge/operations"
 	"github.com/spf13/cobra"
 )
 
-// sampleConfig shows the supported per-forge settings in a ~/.forge.toml file.
+// sampleConfig shows the supported per-forge settings in a ~/.config/forge/config.toml file.
 const sampleConfig = `[github]
 token = "..."
 

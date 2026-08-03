@@ -41,5 +41,5 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().String("config", "", "path to the forge config file (default ~/.forge.toml)")
+	rootCmd.PersistentFlags().String("config", "", "path to the forge config file (default ~/.config/forge/config.toml)")
 }

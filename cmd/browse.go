@@ -14,7 +14,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/pratyay360/forge/v1/operations"
+	"github.com/pratyay360/forge/operations"
 	"github.com/spf13/cobra"
 )
 
@@ -46,8 +46,6 @@ func init() {
 	_ = browseCmd.Flags().MarkHidden("demo")
 }
 
-// demoTabs returns sample data for the hidden --demo flag, letting users
-// preview the UI without credentials.
 func demoTabs() [3][]browseEntry {
 	return [3][]browseEntry{
 		{
