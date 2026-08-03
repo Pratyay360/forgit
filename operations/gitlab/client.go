@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/pratyay360/forge/operations"
+	"github.com/pratyay360/forgit/operations"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 

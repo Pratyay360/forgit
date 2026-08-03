@@ -1,4 +1,4 @@
-module github.com/pratyay360/forge
+module github.com/pratyay360/forgit
 
 go 1.26.5
 

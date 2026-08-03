@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "github.com/pratyay360/forge/cmd"
+import "github.com/pratyay360/forgit/cmd"
 
 func main() {
 	cmd.Execute()

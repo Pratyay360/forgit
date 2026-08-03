@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pratyay360/forge/operations"
-	"github.com/pratyay360/forge/operations/bitbucket"
-	"github.com/pratyay360/forge/operations/forgejo"
-	"github.com/pratyay360/forge/operations/github"
-	"github.com/pratyay360/forge/operations/gitlab"
-	"github.com/pratyay360/forge/operations/hut"
+	"github.com/pratyay360/forgit/operations"
+	"github.com/pratyay360/forgit/operations/bitbucket"
+	"github.com/pratyay360/forgit/operations/forgejo"
+	"github.com/pratyay360/forgit/operations/github"
+	"github.com/pratyay360/forgit/operations/gitlab"
+	"github.com/pratyay360/forgit/operations/hut"
 )
 
 // forgeClient is implemented by every forge-specific client. Every operation

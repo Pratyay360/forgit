@@ -34,40 +34,30 @@ type Instance struct {
 	Username string `toml:"username"`
 }
 
-// GitHubConfig holds GitHub credentials.
 type GitHubConfig struct {
 	Token string `toml:"token"`
 }
 
-// GitLabConfig holds GitLab credentials. URL is optional and defaults to the
-// public gitlab.com instance.
 type GitLabConfig struct {
 	Token string `toml:"token"`
 	URL   string `toml:"url"`
 }
 
-// ForgejoConfig holds Forgejo credentials and the optional server base URL.
 type ForgejoConfig struct {
 	Token string `toml:"token"`
 	URL   string `toml:"url"`
 }
 
-// SourceHutConfig holds SourceHut credentials. The username is required
-// because the git.sr.ht and todo.sr.ht APIs are scoped per user.
 type SourceHutConfig struct {
 	Token    string `toml:"token"`
 	Username string `toml:"username"`
 }
 
-// BitbucketConfig holds Bitbucket credentials. The username is the account or
-// workspace used to scope repository listings.
 type BitbucketConfig struct {
 	Token    string `toml:"token"`
 	Username string `toml:"username"`
 }
 
-// Environment variables override the config file. FORGE_CONFIG overrides the
-// config file location itself.
 const (
 	EnvConfigPath        = "FORGE_CONFIG"
 	EnvGitHubToken       = "FORGE_GITHUB_TOKEN"
@@ -101,9 +91,6 @@ func ResolveConfigPath(flagValue string) (string, error) {
 	return DefaultConfigPath()
 }
 
-// LoadConfig reads the TOML config file (if it exists) and applies environment
-// variable overrides on top. A missing file is not an error; it simply yields a
-// config populated from the environment.
 func LoadConfig(path string) (Config, error) {
 	var cfg Config
 	if _, err := toml.DecodeFile(path, &cfg); err != nil {

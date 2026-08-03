@@ -18,7 +18,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pratyay360/forge/operations"
+	"github.com/pratyay360/forgit/operations"
 )
 
 // GraphQL endpoints per service (overridable so tests can point the client

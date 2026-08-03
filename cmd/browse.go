@@ -14,7 +14,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/pratyay360/forge/operations"
+	"github.com/pratyay360/forgit/operations"
 	"github.com/spf13/cobra"
 )
 
@@ -50,7 +50,7 @@ func demoTabs() [3][]browseEntry {
 	return [3][]browseEntry{
 		{
 			{forge: "github", title: "charmbracelet/bubbletea", url: "https://github.com/charmbracelet/bubbletea"},
-			{forge: "github", title: "pratyay360/forge", url: "https://github.com/pratyay360/forge", state: "private"},
+			{forge: "github", title: "pratyay360/forge", url: "https://github.com/pratyay360/forgit", state: "private"},
 			{forge: "gitlab", title: "gitlab-org/gitlab", url: "https://gitlab.com/gitlab-org/gitlab"},
 			{forge: "forgejo", title: "codeberg/forgejo", url: "https://codeberg.org/codeberg/forgejo"},
 			{forge: "sourcehut", title: "~sircmpwn/hare", url: "https://git.sr.ht/~sircmpwn/hare"},
@@ -60,7 +60,7 @@ func demoTabs() [3][]browseEntry {
 		},
 		{
 			{forge: "github", title: "#42 TUI glitches on resize", url: "https://github.com/charmbracelet/bubbletea/issues/42", state: "open"},
-			{forge: "github", title: "#7 add --json output", url: "https://github.com/pratyay360/forge/issues/7", state: "open"},
+			{forge: "github", title: "#7 add --json output", url: "https://github.com/pratyay360/forgit/issues/7", state: "open"},
 			{forge: "gitlab", title: "#999 docs: fix typo", url: "https://gitlab.com/gitlab-org/gitlab/-/issues/999", state: "opened"},
 			{forge: "sourcehut", title: "~sircmpwn/todo ~T0 draft replies", url: "https://todo.sr.ht/~sircmpwn/todo/0", state: "open"},
 			{forge: "bitbucket", title: "#88 plan builds", url: "https://bitbucket.org/atlassian/python-bitbucket/issues/88", state: "new"},

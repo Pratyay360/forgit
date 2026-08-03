@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/pratyay360/forge/operations"
+	"github.com/pratyay360/forgit/operations"
 	"github.com/spf13/cobra"
 )
 

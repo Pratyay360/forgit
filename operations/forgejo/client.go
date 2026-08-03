@@ -13,7 +13,7 @@ import (
 	"time"
 
 	fj "codeberg.org/mvdkleijn/forgejo-sdk/forgejo"
-	"github.com/pratyay360/forge/operations"
+	"github.com/pratyay360/forgit/operations"
 )
 
 type Client struct {
