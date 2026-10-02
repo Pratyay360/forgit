@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// sampleConfig shows the supported per-forge settings in a ~/.config/forge/config.toml file.
+// sampleConfig shows the supported per-forge settings in a ~/.config/forgit/config.toml file.
 const sampleConfig = `[github]
 token = "..."
 
@@ -82,7 +82,7 @@ func runConfig(cmd *cobra.Command, args []string) error {
 	}
 	if !cfg.Enabled() {
 		fmt.Fprintln(out, "\nNo forge credentials configured. Create the file above with per-forge")
-		fmt.Fprintln(out, "tokens, or set the FORGE_*_TOKEN environment variables. Example:")
+		fmt.Fprintln(out, "tokens, or set the FORGIT_*_TOKEN environment variables. Example:")
 		fmt.Fprintln(out)
 		fmt.Fprint(out, sampleConfig)
 	}
@@ -125,7 +125,7 @@ func loadConfig(cmd *cobra.Command) (operations.Config, error) {
 		return cfg, err
 	}
 	if !cfg.Enabled() {
-		return cfg, fmt.Errorf("no forge credentials configured: create %s with per-forge tokens or set the FORGE_*_TOKEN environment variables (run 'forge config' to see the resolved path)", path)
+		return cfg, fmt.Errorf("no forge credentials configured: create %s with per-forge tokens or set the FORGIT_*_TOKEN environment variables (run 'forgit config' to see the resolved path)", path)
 	}
 	return cfg, nil
 }

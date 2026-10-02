@@ -23,11 +23,12 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "forge",
+	Use:   "forgit",
 	Short: "A unified CLI for your git forges",
-	Long: `forge is a unified command-line client for GitHub, GitLab, Forgejo,
+	Long: `forgit is a unified command-line client for GitHub, GitLab, Forgejo,
 SourceHut and Bitbucket. With one config file (or environment variables) it
-aggregates repositories, issues and pull requests from every forge you use.`,
+aggregates repositories, issues and pull requests from every forge you use,
+and checks out pull requests from any of them into your local git repository.`,
 	SilenceUsage: true,
 }
 
@@ -41,5 +42,5 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().String("config", "", "path to the forge config file (default ~/.config/forge/config.toml)")
+	rootCmd.PersistentFlags().String("config", "", "path to the forgit config file (default ~/.config/forgit/config.toml)")
 }

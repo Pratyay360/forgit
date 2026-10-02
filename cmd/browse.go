@@ -250,7 +250,7 @@ func (m *browseModel) handleKey(msg tea.KeyMsg) tea.Cmd {
 	case key.Code == tea.KeyEnter:
 		if e := m.current(); e != nil && e.url != "" {
 			m.status = "opened " + e.url
-			openURLFn(e.url)
+			_ = openURLFn(e.url)
 			return tea.Tick(2*time.Second, func(time.Time) tea.Msg { return clearStatusMsg{status: m.status} })
 		}
 	case key.Text == "/":
@@ -449,7 +449,7 @@ func (m *browseModel) render() string {
 
 	var b strings.Builder
 
-	title := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("213")).Render("forge")
+	title := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("213")).Render("forgit")
 	b.WriteString(title)
 	b.WriteString("  ")
 	for i, name := range tabNames {
@@ -625,7 +625,7 @@ func truncate(s string, max int) string {
 var openURLFn = openURL
 
 // openURL opens the URL in the default browser, falling back to printing it.
-func openURL(url string) {
+func openURL(url string) error {
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
 	case "darwin":
@@ -637,5 +637,7 @@ func openURL(url string) {
 	}
 	if err := cmd.Start(); err != nil {
 		fmt.Fprintln(os.Stderr, url)
+		return err
 	}
+	return nil
 }

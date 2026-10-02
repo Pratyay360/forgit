@@ -59,16 +59,16 @@ type BitbucketConfig struct {
 }
 
 const (
-	EnvConfigPath        = "FORGE_CONFIG"
-	EnvGitHubToken       = "FORGE_GITHUB_TOKEN"
-	EnvGitLabToken       = "FORGE_GITLAB_TOKEN"
-	EnvGitLabURL         = "FORGE_GITLAB_URL"
-	EnvForgejoToken      = "FORGE_FORGEJO_TOKEN"
-	EnvForgejoURL        = "FORGE_FORGEJO_URL"
-	EnvSourceHutToken    = "FORGE_SOURCEHUT_TOKEN"
-	EnvSourceHutUsername = "FORGE_SOURCEHUT_USERNAME"
-	EnvBitbucketToken    = "FORGE_BITBUCKET_TOKEN"
-	EnvBitbucketUsername = "FORGE_BITBUCKET_USERNAME"
+	EnvConfigPath        = "FORGIT_CONFIG"
+	EnvGitHubToken       = "FORGIT_GITHUB_TOKEN"
+	EnvGitLabToken       = "FORGIT_GITLAB_TOKEN"
+	EnvGitLabURL         = "FORGIT_GITLAB_URL"
+	EnvForgejoToken      = "FORGIT_FORGEJO_TOKEN"
+	EnvForgejoURL        = "FORGIT_FORGEJO_URL"
+	EnvSourceHutToken    = "FORGIT_SOURCEHUT_TOKEN"
+	EnvSourceHutUsername = "FORGIT_SOURCEHUT_USERNAME"
+	EnvBitbucketToken    = "FORGIT_BITBUCKET_TOKEN"
+	EnvBitbucketUsername = "FORGIT_BITBUCKET_USERNAME"
 )
 
 func DefaultConfigPath() (string, error) {
@@ -76,11 +76,11 @@ func DefaultConfigPath() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("determining home directory: %w", err)
 	}
-	return filepath.Join(home, ".config/forge/config.toml"), nil
+	return filepath.Join(home, ".config/forgit/config.toml"), nil
 }
 
 // ResolveConfigPath returns the config path from a --config flag, the
-// FORGE_CONFIG environment variable, or the default location, in that order.
+// FORGIT_CONFIG environment variable, or the default location, in that order.
 func ResolveConfigPath(flagValue string) (string, error) {
 	if flagValue != "" {
 		return flagValue, nil

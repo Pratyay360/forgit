@@ -2,5 +2,6 @@
 go = "latest"
 "go:github.com/spf13/cobra-cli" = "latest"
 golines = "latest"
+goreleaser = "latest"
 prettier = "latest"
 staticcheck = "latest"

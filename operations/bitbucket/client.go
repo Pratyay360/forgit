@@ -323,6 +323,30 @@ func (c *Client) request(ctx context.Context, method, endpoint string, payload a
 	return nil
 }
 
+// rawGet fetches a URL and returns the body as text. It is used for endpoints
+// that return a patch rather than JSON, such as a pull request diff.
+func (c *Client) rawGet(ctx context.Context, endpoint, accept string) (string, *http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", nil, err
+	}
+	req.SetBasicAuth(c.username, c.token)
+	req.Header.Set("Accept", accept)
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return "", nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		return "", resp, fmt.Errorf("bitbucket API %s: %s", endpoint, resp.Status)
+	}
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", resp, err
+	}
+	return string(b), resp, nil
+}
+
 // runIDFromUUID returns a stable numeric-ish identifier from a Bitbucket
 // pipeline UUID (e.g. "{abc123...}"), falling back to 0 when unparsable.
 func runIDFromUUID(uuid string) int64 {
