@@ -79,6 +79,21 @@ name = "gitlab-work"
 type = "gitlab"
 token = "..."
 url = "https://gitlab.example.com"
+
+# A user-named alias of a built-in driver. The 'type' is the label you see
+# everywhere; 'driver' picks which API client handles requests. The URL
+# shape must match the driver's (e.g. Gitea uses Forgejo's /api/v1). This
+# is the right tool when a server you use is API-compatible with one of
+# the built-in forges but you'd rather not label it as that forge — Gitea,
+# a self-hosted Gitea/Forgejo mirror, or a server at a non-default URL that
+# you want to name distinctly. 'url' is required so the local remote can
+# be matched back to this instance.
+[[instance]]
+name = "gitea-home"
+type = "gitea"
+driver = "forgejo"
+token = "..."
+url = "https://gitea.example.com"
 ```
 
 Or use environment variables, all prefixed `FORGIT_`:
@@ -117,3 +132,7 @@ act on a forge repository without being inside a clone.
   missing capabilities surface as informational notes rather than failures.
 - A forge that does not exist yet is one new file in `operations/<forge>/`
   plus one `case` in `cmd/client.go`. The rest of the CLI stays unchanged.
+- Forges that are API-compatible with one of the built-in drivers (Gitea,
+  internal Forgejo mirrors, etc.) can be added as a user-named alias in
+  config: set `driver` on an `[[instance]]` entry and pick whatever
+  `type` you want to see in listings.

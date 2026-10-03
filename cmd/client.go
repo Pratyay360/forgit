@@ -90,17 +90,25 @@ func errNoCapability(forge, feature string) error {
 }
 
 // clients builds one client per configured instance (including multiple
-// instances of the same forge type).
+// instances of the same forge type and user-named aliases of built-in
+// drivers). An alias uses inst.Driver to pick the underlying client and
+// inst.Type as the public label that gets stamped on every returned
+// resource.
 func clients(cfg operations.Config) ([]forgeClient, error) {
 	var cs []forgeClient
 	for _, inst := range cfg.All() {
-		switch inst.Type {
+		driver := inst.Type
+		if inst.Driver != "" {
+			driver = inst.Driver
+		}
+		switch driver {
 		case "github":
 			c, err := github.New(operations.GitHubConfig{Token: inst.Token})
 			if err != nil {
 				return nil, fmt.Errorf("%s: %w", inst.Name, err)
 			}
 			c.SetInstance(inst.Name)
+			c.SetForgeLabel(inst.Type)
 			cs = append(cs, c)
 		case "gitlab":
 			c, err := gitlab.New(operations.GitLabConfig{Token: inst.Token, URL: inst.URL})
@@ -108,6 +116,7 @@ func clients(cfg operations.Config) ([]forgeClient, error) {
 				return nil, fmt.Errorf("%s: %w", inst.Name, err)
 			}
 			c.SetInstance(inst.Name)
+			c.SetForgeLabel(inst.Type)
 			cs = append(cs, c)
 		case "forgejo":
 			c, err := forgejo.New(operations.ForgejoConfig{Token: inst.Token, URL: inst.URL})
@@ -115,6 +124,7 @@ func clients(cfg operations.Config) ([]forgeClient, error) {
 				return nil, fmt.Errorf("%s: %w", inst.Name, err)
 			}
 			c.SetInstance(inst.Name)
+			c.SetForgeLabel(inst.Type)
 			cs = append(cs, c)
 		case "sourcehut":
 			c, err := hut.New(operations.SourceHutConfig{Token: inst.Token})
@@ -122,6 +132,7 @@ func clients(cfg operations.Config) ([]forgeClient, error) {
 				return nil, fmt.Errorf("%s: %w", inst.Name, err)
 			}
 			c.SetInstance(inst.Name)
+			c.SetForgeLabel(inst.Type)
 			cs = append(cs, c)
 		case "bitbucket":
 			c, err := bitbucket.New(operations.BitbucketConfig{Token: inst.Token, Username: inst.Username})
@@ -129,6 +140,7 @@ func clients(cfg operations.Config) ([]forgeClient, error) {
 				return nil, fmt.Errorf("%s: %w", inst.Name, err)
 			}
 			c.SetInstance(inst.Name)
+			c.SetForgeLabel(inst.Type)
 			cs = append(cs, c)
 		default:
 			return nil, fmt.Errorf("unknown forge type %q in instance %q", inst.Type, inst.Name)

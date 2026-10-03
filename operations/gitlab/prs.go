@@ -30,7 +30,7 @@ func (c *Client) GetPR(ctx context.Context, repo string, number int) (operations
 // prDetail converts an API merge request into the unified detail type.
 func (c *Client) prDetail(repo string, mr *gitlab.MergeRequest) operations.PRDetail {
 	d := operations.PRDetail{
-		Forge:      "gitlab",
+		Forge:      c.forgeLabelOrDefault(),
 		Instance:   c.Name(),
 		Repo:       repo,
 		Number:     int(mr.IID),
@@ -221,7 +221,7 @@ func (c *Client) GetIssue(ctx context.Context, repo string, number int) (operati
 // issueDetail converts an API issue into the unified detail type.
 func (c *Client) issueDetail(repo string, is *gitlab.Issue) operations.IssueDetail {
 	d := operations.IssueDetail{
-		Forge:     "gitlab",
+		Forge:     c.forgeLabelOrDefault(),
 		Instance:  c.Name(),
 		Repo:      repo,
 		Number:    int(is.IID),

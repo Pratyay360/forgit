@@ -17,11 +17,12 @@ import (
 )
 
 type Client struct {
-	inner    *fj.Client
-	baseURL  string
-	token    string
-	http     *http.Client
-	instance string
+	inner      *fj.Client
+	baseURL    string
+	token      string
+	http       *http.Client
+	instance   string
+	forgeLabel string // user-visible forge name; defaults to "forgejo"
 }
 
 // New builds a Forgejo client from the given credentials.
@@ -36,10 +37,11 @@ func New(cfg operations.ForgejoConfig) (*Client, error) {
 		return nil, fmt.Errorf("creating client: %w", err)
 	}
 	return &Client{
-		inner:   c,
-		baseURL: base,
-		token:   cfg.Token,
-		http:    &http.Client{Timeout: 30 * time.Second},
+		inner:      c,
+		baseURL:    base,
+		token:      cfg.Token,
+		http:       &http.Client{Timeout: 30 * time.Second},
+		forgeLabel: "forgejo",
 	}, nil
 }
 
@@ -50,6 +52,24 @@ func (c *Client) SetInstance(name string) { c.instance = name }
 func (c *Client) Name() string {
 	if c.instance != "" {
 		return c.instance
+	}
+	return "forgejo"
+}
+
+// SetForgeLabel overrides the forge label the client stamps on returned
+// resources. Used to give user-named aliases (e.g. "gitea") the right
+// identity in listings while the Forgejo client does the API work.
+func (c *Client) SetForgeLabel(label string) {
+	if label != "" {
+		c.forgeLabel = label
+	}
+}
+
+// forgeLabel returns the label to stamp on returned resources, falling back
+// to "forgejo" when SetForgeLabel was never called.
+func (c *Client) forgeLabelOrDefault() string {
+	if c.forgeLabel != "" {
+		return c.forgeLabel
 	}
 	return "forgejo"
 }
@@ -68,7 +88,7 @@ func (c *Client) ListRepos(ctx context.Context) ([]operations.Repo, error) {
 	out := make([]operations.Repo, 0, len(repos))
 	for _, r := range repos {
 		out = append(out, operations.Repo{
-			Forge:    "forgejo",
+			Forge:    c.forgeLabelOrDefault(),
 			Instance: c.Name(),
 			FullName: r.FullName,
 			URL:      r.HTMLURL,
@@ -99,7 +119,7 @@ func (c *Client) CreateRepo(ctx context.Context, in operations.RepoInput) (opera
 		return operations.Repo{}, fmt.Errorf("creating repository: %w", err)
 	}
 	return operations.Repo{
-		Forge:    "forgejo",
+		Forge:    c.forgeLabelOrDefault(),
 		Instance: c.Name(),
 		FullName: repo.FullName,
 		URL:      repo.HTMLURL,
@@ -118,7 +138,7 @@ func (c *Client) RenameRepo(ctx context.Context, fullName, newName string) (oper
 		return operations.Repo{}, fmt.Errorf("renaming repository: %w", err)
 	}
 	return operations.Repo{
-		Forge:    "forgejo",
+		Forge:    c.forgeLabelOrDefault(),
 		Instance: c.Name(),
 		FullName: repo.FullName,
 		URL:      repo.HTMLURL,
@@ -149,7 +169,7 @@ func (c *Client) SetVisibility(ctx context.Context, fullName string, private boo
 		return operations.Repo{}, fmt.Errorf("changing visibility: %w", err)
 	}
 	return operations.Repo{
-		Forge:    "forgejo",
+		Forge:    c.forgeLabelOrDefault(),
 		Instance: c.Name(),
 		FullName: repo.FullName,
 		URL:      repo.HTMLURL,
@@ -211,7 +231,7 @@ func (c *Client) ListRuns(ctx context.Context, fullName string) ([]operations.Ru
 			title = t.DisplayTitle
 		}
 		out = append(out, operations.Run{
-			Forge:    "forgejo",
+			Forge:    c.forgeLabelOrDefault(),
 			Instance: c.Name(),
 			Repo:     fullName,
 			ID:       t.ID,
@@ -260,7 +280,7 @@ func (c *Client) ListWorkflows(ctx context.Context, fullName string) ([]operatio
 				link = *e.HTMLURL
 			}
 			out = append(out, operations.Workflow{
-				Forge:    "forgejo",
+				Forge:    c.forgeLabelOrDefault(),
 				Instance: c.Name(),
 				Repo:     fullName,
 				Name:     e.Name,
@@ -322,7 +342,7 @@ func (c *Client) ListIssues(ctx context.Context) ([]operations.Issue, error) {
 			repo = is.Repository.FullName
 		}
 		out = append(out, operations.Issue{
-			Forge:    "forgejo",
+			Forge:    c.forgeLabelOrDefault(),
 			Instance: c.Name(),
 			Repo:     repo,
 			Number:   int(is.Index),
@@ -375,7 +395,7 @@ func (c *Client) ListPRs(ctx context.Context) ([]operations.PR, error) {
 		}
 		for _, pr := range prs {
 			out = append(out, operations.PR{
-				Forge:    "forgejo",
+				Forge:    c.forgeLabelOrDefault(),
 				Instance: c.Name(),
 				Repo:     r.FullName,
 				Number:   int(pr.Index),

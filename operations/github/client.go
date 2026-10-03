@@ -13,8 +13,9 @@ import (
 
 // Client talks to the GitHub API on behalf of the authenticated user.
 type Client struct {
-	inner    *github.Client
-	instance string
+	inner      *github.Client
+	instance   string
+	forgeLabel string // user-visible forge name; defaults to "github"
 }
 
 // New builds a GitHub client from the given credentials.
@@ -23,7 +24,7 @@ func New(cfg operations.GitHubConfig) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("creating client: %w", err)
 	}
-	return &Client{inner: c}, nil
+	return &Client{inner: c, forgeLabel: "github"}, nil
 }
 
 // SetInstance names this client's instance (default: the forge type).
@@ -33,6 +34,24 @@ func (c *Client) SetInstance(name string) { c.instance = name }
 func (c *Client) Name() string {
 	if c.instance != "" {
 		return c.instance
+	}
+	return "github"
+}
+
+// SetForgeLabel overrides the forge label the client stamps on returned
+// resources. Used to give user-named aliases the right identity in listings
+// while the GitHub client does the API work.
+func (c *Client) SetForgeLabel(label string) {
+	if label != "" {
+		c.forgeLabel = label
+	}
+}
+
+// forgeLabelOrDefault returns the label to stamp on returned resources,
+// falling back to "github" when SetForgeLabel was never called.
+func (c *Client) forgeLabelOrDefault() string {
+	if c.forgeLabel != "" {
+		return c.forgeLabel
 	}
 	return "github"
 }
@@ -52,7 +71,7 @@ func (c *Client) ListRepos(ctx context.Context) ([]operations.Repo, error) {
 	out := make([]operations.Repo, 0, len(repos))
 	for _, r := range repos {
 		out = append(out, operations.Repo{
-			Forge:    "github",
+			Forge:    c.forgeLabelOrDefault(),
 			Instance: c.Name(),
 			FullName: deref(r.FullName),
 			URL:      deref(r.HTMLURL),
@@ -77,7 +96,7 @@ func (c *Client) CreateRepo(ctx context.Context, in operations.RepoInput) (opera
 		return operations.Repo{}, fmt.Errorf("creating repository: %w", err)
 	}
 	return operations.Repo{
-		Forge:    "github",
+		Forge:    c.forgeLabelOrDefault(),
 		Instance: c.Name(),
 		FullName: deref(repo.FullName),
 		URL:      deref(repo.HTMLURL),
@@ -93,7 +112,7 @@ func (c *Client) RenameRepo(ctx context.Context, fullName, newName string) (oper
 		return operations.Repo{}, fmt.Errorf("renaming repository: %w", err)
 	}
 	return operations.Repo{
-		Forge:    "github",
+		Forge:    c.forgeLabelOrDefault(),
 		Instance: c.Name(),
 		FullName: deref(repo.FullName),
 		URL:      deref(repo.HTMLURL),
@@ -118,7 +137,7 @@ func (c *Client) SetVisibility(ctx context.Context, fullName string, private boo
 		return operations.Repo{}, fmt.Errorf("changing visibility: %w", err)
 	}
 	return operations.Repo{
-		Forge:    "github",
+		Forge:    c.forgeLabelOrDefault(),
 		Instance: c.Name(),
 		FullName: deref(repo.FullName),
 		URL:      deref(repo.HTMLURL),
@@ -142,7 +161,7 @@ func (c *Client) ListRuns(ctx context.Context, fullName string) ([]operations.Ru
 			status = c
 		}
 		out = append(out, operations.Run{
-			Forge:    "github",
+			Forge:    c.forgeLabelOrDefault(),
 			Instance: c.Name(),
 			Repo:     fullName,
 			ID:       deref(r.ID),
@@ -165,7 +184,7 @@ func (c *Client) ListWorkflows(ctx context.Context, fullName string) ([]operatio
 	out := make([]operations.Workflow, 0, len(workflows.Workflows))
 	for _, w := range workflows.Workflows {
 		out = append(out, operations.Workflow{
-			Forge:    "github",
+			Forge:    c.forgeLabelOrDefault(),
 			Instance: c.Name(),
 			Repo:     fullName,
 			ID:       deref(w.ID),
@@ -193,7 +212,7 @@ func (c *Client) ListProjects(ctx context.Context) ([]operations.Project, error)
 	out := make([]operations.Project, 0, len(projects))
 	for _, p := range projects {
 		out = append(out, operations.Project{
-			Forge:    "github",
+			Forge:    c.forgeLabelOrDefault(),
 			Instance: c.Name(),
 			FullName: deref(p.Name),
 			URL:      deref(p.HTMLURL),
@@ -219,7 +238,7 @@ func (c *Client) ListIssues(ctx context.Context) ([]operations.Issue, error) {
 			continue // GitHub returns pull requests in the issues API.
 		}
 		out = append(out, operations.Issue{
-			Forge:    "github",
+			Forge:    c.forgeLabelOrDefault(),
 			Instance: c.Name(),
 			Repo:     repoFullName(is),
 			Number:   int(deref(is.Number)),
@@ -258,7 +277,7 @@ func (c *Client) ListPRs(ctx context.Context) ([]operations.PR, error) {
 		}
 		for _, pr := range prs {
 			out = append(out, operations.PR{
-				Forge:    "github",
+				Forge:    c.forgeLabelOrDefault(),
 				Instance: c.Name(),
 				Repo:     deref(r.FullName),
 				Number:   int(deref(pr.Number)),

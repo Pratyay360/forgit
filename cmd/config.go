@@ -33,6 +33,19 @@ name = "gitlab-work"
 type = "gitlab"
 token = "..."
 url = "https://gitlab.example.com"
+
+# A user-named alias of a built-in driver. The 'type' is the public label
+# shown everywhere; 'driver' picks which API client handles requests. The
+# URL shape must match the driver's (e.g. Gitea uses Forgejo's /api/v1).
+# Useful for self-hosted servers you want labelled differently from the
+# upstream driver name (Gitea, an internal Forgejo, etc.). The 'url' is
+# required so the local remote can be matched back to this instance.
+[[instance]]
+name = "gitea-home"
+type = "gitea"
+driver = "forgejo"
+token = "..."
+url = "https://gitea.example.com"
 `
 
 var configCmd = &cobra.Command{
@@ -78,7 +91,13 @@ func runConfig(cmd *cobra.Command, args []string) error {
 		if inst.Token != "" {
 			status = "configured"
 		}
-		_, _ = fmt.Fprintf(out, "  %-10s (%s) %s\n", inst.Name, inst.Type, status)
+		// Aliases show the driver so users can tell at a glance which API
+		// client backs a custom label (e.g. "gitea → forgejo").
+		label := inst.Type
+		if inst.Driver != "" {
+			label = inst.Type + " → " + inst.Driver
+		}
+		_, _ = fmt.Fprintf(out, "  %-10s (%s) %s\n", inst.Name, label, status)
 	}
 	if !cfg.Enabled() {
 		_, _ = fmt.Fprintln(out, "\nNo forge credentials configured. Create the file above with per-forge")

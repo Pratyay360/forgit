@@ -23,8 +23,9 @@ func normalizeBaseURL(raw string) string {
 
 // Client talks to the GitLab API on behalf of the authenticated user.
 type Client struct {
-	inner    *gitlab.Client
-	instance string
+	inner      *gitlab.Client
+	instance   string
+	forgeLabel string // user-visible forge name; defaults to "gitlab"
 }
 
 // New builds a GitLab client from the given credentials. When cfg.URL is set
@@ -39,7 +40,7 @@ func New(cfg operations.GitLabConfig) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("creating client: %w", err)
 	}
-	return &Client{inner: c}, nil
+	return &Client{inner: c, forgeLabel: "gitlab"}, nil
 }
 
 // SetInstance names this client's instance (default: the forge type).
@@ -49,6 +50,24 @@ func (c *Client) SetInstance(name string) { c.instance = name }
 func (c *Client) Name() string {
 	if c.instance != "" {
 		return c.instance
+	}
+	return "gitlab"
+}
+
+// SetForgeLabel overrides the forge label the client stamps on returned
+// resources. Used to give user-named aliases the right identity in listings
+// while the GitLab client does the API work.
+func (c *Client) SetForgeLabel(label string) {
+	if label != "" {
+		c.forgeLabel = label
+	}
+}
+
+// forgeLabelOrDefault returns the label to stamp on returned resources,
+// falling back to "gitlab" when SetForgeLabel was never called.
+func (c *Client) forgeLabelOrDefault() string {
+	if c.forgeLabel != "" {
+		return c.forgeLabel
 	}
 	return "gitlab"
 }
@@ -67,7 +86,7 @@ func (c *Client) ListRepos(ctx context.Context) ([]operations.Repo, error) {
 	out := make([]operations.Repo, 0, len(projects))
 	for _, p := range projects {
 		out = append(out, operations.Repo{
-			Forge:    "gitlab",
+			Forge:    c.forgeLabelOrDefault(),
 			Instance: c.Name(),
 			FullName: p.PathWithNamespace,
 			URL:      p.WebURL,
@@ -106,7 +125,7 @@ func (c *Client) CreateRepo(ctx context.Context, in operations.RepoInput) (opera
 		return operations.Repo{}, fmt.Errorf("creating project: %w", err)
 	}
 	return operations.Repo{
-		Forge:    "gitlab",
+		Forge:    c.forgeLabelOrDefault(),
 		Instance: c.Name(),
 		FullName: project.PathWithNamespace,
 		URL:      project.WebURL,
@@ -124,7 +143,7 @@ func (c *Client) RenameRepo(ctx context.Context, fullName, newName string) (oper
 		return operations.Repo{}, fmt.Errorf("renaming project: %w", err)
 	}
 	return operations.Repo{
-		Forge:    "gitlab",
+		Forge:    c.forgeLabelOrDefault(),
 		Instance: c.Name(),
 		FullName: project.PathWithNamespace,
 		URL:      project.WebURL,
@@ -151,7 +170,7 @@ func (c *Client) SetVisibility(ctx context.Context, fullName string, private boo
 		return operations.Repo{}, fmt.Errorf("changing visibility: %w", err)
 	}
 	return operations.Repo{
-		Forge:    "gitlab",
+		Forge:    c.forgeLabelOrDefault(),
 		Instance: c.Name(),
 		FullName: project.PathWithNamespace,
 		URL:      project.WebURL,
@@ -170,7 +189,7 @@ func (c *Client) ListRuns(ctx context.Context, fullName string) ([]operations.Ru
 	out := make([]operations.Run, 0, len(pipelines))
 	for _, p := range pipelines {
 		out = append(out, operations.Run{
-			Forge:    "gitlab",
+			Forge:    c.forgeLabelOrDefault(),
 			Instance: c.Name(),
 			Repo:     fullName,
 			ID:       p.ID,
@@ -203,7 +222,7 @@ func (c *Client) ListProjects(ctx context.Context) ([]operations.Project, error)
 	out := make([]operations.Project, 0, len(projects))
 	for _, p := range projects {
 		out = append(out, operations.Project{
-			Forge:    "gitlab",
+			Forge:    c.forgeLabelOrDefault(),
 			Instance: c.Name(),
 			FullName: p.PathWithNamespace,
 			URL:      p.WebURL,
@@ -227,7 +246,7 @@ func (c *Client) ListIssues(ctx context.Context) ([]operations.Issue, error) {
 	out := make([]operations.Issue, 0, len(issues))
 	for _, is := range issues {
 		out = append(out, operations.Issue{
-			Forge:    "gitlab",
+			Forge:    c.forgeLabelOrDefault(),
 			Instance: c.Name(),
 			Repo:     repoFromWebURL(is.WebURL, int(is.ProjectID)),
 			Number:   int(is.IID),
@@ -252,7 +271,7 @@ func (c *Client) ListPRs(ctx context.Context) ([]operations.PR, error) {
 	out := make([]operations.PR, 0, len(mrs))
 	for _, mr := range mrs {
 		out = append(out, operations.PR{
-			Forge:    "gitlab",
+			Forge:    c.forgeLabelOrDefault(),
 			Instance: c.Name(),
 			Repo:     repoFromWebURL(mr.WebURL, int(mr.ProjectID)),
 			Number:   int(mr.IID),

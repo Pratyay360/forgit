@@ -62,7 +62,7 @@ func (c *Client) GetPR(ctx context.Context, repo string, number int) (operations
 			url = fmt.Sprintf("https://lists.sr.ht/~%s/%s/patches/%d", username, repo, number)
 		}
 		return operations.PRDetail{
-			Forge:     "sourcehut",
+			Forge:     c.forgeLabelOrDefault(),
 			Instance:  c.Name(),
 			Repo:      repo,
 			Number:    number,
@@ -262,7 +262,7 @@ func (c *Client) ticket(ctx context.Context, trackerName string, number int) (*t
 // issueDetail converts a ticket into the unified issue detail type.
 func (c *Client) issueDetail(repo string, t *ticketDetail) operations.IssueDetail {
 	d := operations.IssueDetail{
-		Forge:     "sourcehut",
+		Forge:     c.forgeLabelOrDefault(),
 		Instance:  c.Name(),
 		Repo:      repo,
 		Number:    int(t.ID),
@@ -308,7 +308,7 @@ func (c *Client) CreateIssue(ctx context.Context, in operations.IssueInput) (ope
 		return operations.IssueDetail{}, fmt.Errorf("creating ticket: the forge did not return a ticket id")
 	}
 	return operations.IssueDetail{
-		Forge:    "sourcehut",
+		Forge:    c.forgeLabelOrDefault(),
 		Instance: c.Name(),
 		Repo:     in.Repo,
 		Number:   int(resp.CreateIssue.ID),

@@ -25,7 +25,7 @@ func (c *Client) GetPR(ctx context.Context, repo string, number int) (operations
 // prDetail converts an API pull request into the unified detail type.
 func (c *Client) prDetail(repo string, pr *fj.PullRequest) operations.PRDetail {
 	d := operations.PRDetail{
-		Forge:     "forgejo",
+		Forge:     c.forgeLabelOrDefault(),
 		Instance:  c.Name(),
 		Repo:      repo,
 		Number:    int(pr.Index),
@@ -198,7 +198,7 @@ func (c *Client) GetIssue(ctx context.Context, repo string, number int) (operati
 // issueDetail converts an API issue into the unified detail type.
 func (c *Client) issueDetail(repo string, is *fj.Issue) operations.IssueDetail {
 	d := operations.IssueDetail{
-		Forge:     "forgejo",
+		Forge:     c.forgeLabelOrDefault(),
 		Instance:  c.Name(),
 		Repo:      repo,
 		Number:    int(is.Index),

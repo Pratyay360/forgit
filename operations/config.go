@@ -25,13 +25,26 @@ type Config struct {
 }
 
 // Instance describes a single forge server/account. It is used for multiple
-// instances of the same forge type (e.g. two self-hosted GitLab servers).
+// instances of the same forge type (e.g. two self-hosted GitLab servers) and
+// for user-named aliases of a built-in client (e.g. a Gitea server labelled
+// "gitea" but driven by the Forgejo client via Driver).
 type Instance struct {
 	Name     string `toml:"name"`
 	Type     string `toml:"type"`
+	Driver   string `toml:"driver"`
 	Token    string `toml:"token"`
 	URL      string `toml:"url"`
 	Username string `toml:"username"`
+}
+
+// knownDrivers is the set of values Driver may take. Keeping it private lets
+// the public API stay small while still validating user input.
+var knownDrivers = map[string]bool{
+	"github":    true,
+	"gitlab":    true,
+	"forgejo":   true,
+	"sourcehut": true,
+	"bitbucket": true,
 }
 
 type GitHubConfig struct {
@@ -102,7 +115,25 @@ func LoadConfig(path string) (Config, error) {
 	if err := resolveTokens(&cfg); err != nil {
 		return cfg, err
 	}
+	if err := cfg.Validate(); err != nil {
+		return cfg, err
+	}
 	return cfg, nil
+}
+
+// Validate checks that every configured instance points at a known driver.
+// Aliases (entries with Driver) are validated against knownDrivers; entries
+// without Driver fall through to the existing per-forge-config path, which
+// already filters out sections with no token via All(). The function is
+// intentionally narrow because the variable-name vocabulary grows with each
+// forge that gets added.
+func (c Config) Validate() error {
+	for _, i := range c.Instances {
+		if i.Driver != "" && !knownDrivers[i.Driver] {
+			return fmt.Errorf("instance %q: unknown driver %q (must be one of github, gitlab, forgejo, sourcehut, bitbucket)", i.Name, i.Driver)
+		}
+	}
+	return nil
 }
 
 func resolveTokens(cfg *Config) error {

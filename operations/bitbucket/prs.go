@@ -63,7 +63,7 @@ func (c *Client) GetPR(ctx context.Context, repo string, number int) (operations
 func (c *Client) prDetail(repo string, pr *prDetailItem) operations.PRDetail {
 	state := strings.ToLower(pr.State)
 	return operations.PRDetail{
-		Forge:        "bitbucket",
+		Forge:        c.forgeLabelOrDefault(),
 		Instance:     c.Name(),
 		Repo:         repo,
 		Number:       int(pr.ID),

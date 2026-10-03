@@ -37,9 +37,10 @@ var errStuckCursor = fmt.Errorf("server kept returning a cursor (more than %d pa
 // Client talks to the SourceHut GraphQL services on behalf of the configured
 // user.
 type Client struct {
-	token    string
-	http     *http.Client
-	instance string
+	token      string
+	http       *http.Client
+	instance   string
+	forgeLabel string // user-visible forge name; defaults to "sourcehut"
 }
 
 // New builds a SourceHut client from the given credentials.
@@ -48,8 +49,9 @@ func New(cfg operations.SourceHutConfig) (*Client, error) {
 		return nil, fmt.Errorf("sourcehut: token is required (set [sourcehut] token in config or %s)", operations.EnvSourceHutToken)
 	}
 	return &Client{
-		token: cfg.Token,
-		http:  &http.Client{Timeout: 30 * time.Second},
+		token:      cfg.Token,
+		http:       &http.Client{Timeout: 30 * time.Second},
+		forgeLabel: "sourcehut",
 	}, nil
 }
 
@@ -60,6 +62,24 @@ func (c *Client) SetInstance(name string) { c.instance = name }
 func (c *Client) Name() string {
 	if c.instance != "" {
 		return c.instance
+	}
+	return "sourcehut"
+}
+
+// SetForgeLabel overrides the forge label the client stamps on returned
+// resources. Used to give user-named aliases the right identity in listings
+// while the SourceHut client does the API work.
+func (c *Client) SetForgeLabel(label string) {
+	if label != "" {
+		c.forgeLabel = label
+	}
+}
+
+// forgeLabelOrDefault returns the label to stamp on returned resources,
+// falling back to "sourcehut" when SetForgeLabel was never called.
+func (c *Client) forgeLabelOrDefault() string {
+	if c.forgeLabel != "" {
+		return c.forgeLabel
 	}
 	return "sourcehut"
 }
@@ -174,7 +194,7 @@ func (c *Client) ListRepos(ctx context.Context) ([]operations.Repo, error) {
 		}
 		for _, r := range page.Me.Repositories.Results {
 			out = append(out, operations.Repo{
-				Forge:    "sourcehut",
+				Forge:    c.forgeLabelOrDefault(),
 				Instance: c.Name(),
 				FullName: username + "/" + r.Name,
 				URL:      "https://git.sr.ht/~" + username + "/" + r.Name,
@@ -224,7 +244,7 @@ func (c *Client) CreateRepo(ctx context.Context, in operations.RepoInput) (opera
 	}
 	name := result.CreateRepository.Repository.Name
 	return operations.Repo{
-		Forge:    "sourcehut",
+		Forge:    c.forgeLabelOrDefault(),
 		Instance: c.Name(),
 		FullName: username + "/" + name,
 		URL:      "https://git.sr.ht/~" + username + "/" + name,
@@ -279,7 +299,7 @@ func (c *Client) updateRepo(ctx context.Context, fullName string, extra map[stri
 	}
 	repoName := result.UpdateRepository.Repository.Name
 	return operations.Repo{
-		Forge:    "sourcehut",
+		Forge:    c.forgeLabelOrDefault(),
 		Instance: c.Name(),
 		FullName: owner + "/" + repoName,
 		URL:      "https://git.sr.ht/~" + owner + "/" + repoName,
@@ -376,7 +396,7 @@ func (c *Client) ListRuns(ctx context.Context, fullName string) ([]operations.Ru
 				continue
 			}
 			out = append(out, operations.Run{
-				Forge:    "sourcehut",
+				Forge:    c.forgeLabelOrDefault(),
 				Instance: c.Name(),
 				Repo:     fullName,
 				ID:       j.ID,
@@ -509,7 +529,7 @@ func (c *Client) ListIssues(ctx context.Context) ([]operations.Issue, error) {
 				number = n
 			}
 			out = append(out, operations.Issue{
-				Forge:    "sourcehut",
+				Forge:    c.forgeLabelOrDefault(),
 				Instance: c.Name(),
 				Repo:     name,
 				Number:   number,
@@ -650,7 +670,7 @@ func (c *Client) ListPRs(ctx context.Context) ([]operations.PR, error) {
 				continue
 			}
 			out = append(out, operations.PR{
-				Forge:    "sourcehut",
+				Forge:    c.forgeLabelOrDefault(),
 				Instance: c.Name(),
 				Repo:     name,
 				Number:   int(ps.ID),

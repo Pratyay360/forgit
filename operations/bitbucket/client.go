@@ -26,10 +26,11 @@ var apiBase = "https://api.bitbucket.org/2.0"
 
 // Client talks to the Bitbucket REST API on behalf of the configured user.
 type Client struct {
-	username string
-	token    string
-	http     *http.Client
-	instance string
+	username   string
+	token      string
+	http       *http.Client
+	instance   string
+	forgeLabel string // user-visible forge name; defaults to "bitbucket"
 }
 
 // New builds a Bitbucket client from the given credentials.
@@ -38,9 +39,10 @@ func New(cfg operations.BitbucketConfig) (*Client, error) {
 		return nil, fmt.Errorf("bitbucket: username is required (set [bitbucket] username in config or %s)", operations.EnvBitbucketUsername)
 	}
 	return &Client{
-		username: cfg.Username,
-		token:    cfg.Token,
-		http:     &http.Client{Timeout: 30 * time.Second},
+		username:   cfg.Username,
+		token:      cfg.Token,
+		http:       &http.Client{Timeout: 30 * time.Second},
+		forgeLabel: "bitbucket",
 	}, nil
 }
 
@@ -51,6 +53,24 @@ func (c *Client) SetInstance(name string) { c.instance = name }
 func (c *Client) Name() string {
 	if c.instance != "" {
 		return c.instance
+	}
+	return "bitbucket"
+}
+
+// SetForgeLabel overrides the forge label the client stamps on returned
+// resources. Used to give user-named aliases the right identity in listings
+// while the Bitbucket client does the API work.
+func (c *Client) SetForgeLabel(label string) {
+	if label != "" {
+		c.forgeLabel = label
+	}
+}
+
+// forgeLabelOrDefault returns the label to stamp on returned resources,
+// falling back to "bitbucket" when SetForgeLabel was never called.
+func (c *Client) forgeLabelOrDefault() string {
+	if c.forgeLabel != "" {
+		return c.forgeLabel
 	}
 	return "bitbucket"
 }
@@ -96,7 +116,7 @@ func (c *Client) ListRepos(ctx context.Context) ([]operations.Repo, error) {
 			repoURL = "https://bitbucket.org/" + r.FullName
 		}
 		out = append(out, operations.Repo{
-			Forge:    "bitbucket",
+			Forge:    c.forgeLabelOrDefault(),
 			Instance: c.Name(),
 			FullName: r.FullName,
 			URL:      repoURL,
@@ -130,7 +150,7 @@ func (c *Client) CreateRepo(ctx context.Context, in operations.RepoInput) (opera
 		return operations.Repo{}, fmt.Errorf("creating repository: %w", err)
 	}
 	return operations.Repo{
-		Forge:    "bitbucket",
+		Forge:    c.forgeLabelOrDefault(),
 		Instance: c.Name(),
 		FullName: body.FullName,
 		URL:      body.Links.HTML.Href,
@@ -160,7 +180,7 @@ func (c *Client) RenameRepo(ctx context.Context, fullName, newName string) (oper
 		return operations.Repo{}, fmt.Errorf("renaming repository: %w", err)
 	}
 	return operations.Repo{
-		Forge:    "bitbucket",
+		Forge:    c.forgeLabelOrDefault(),
 		Instance: c.Name(),
 		FullName: body.FullName,
 		URL:      body.Links.HTML.Href,
@@ -193,7 +213,7 @@ func (c *Client) SetVisibility(ctx context.Context, fullName string, private boo
 		return operations.Repo{}, fmt.Errorf("changing visibility: %w", err)
 	}
 	return operations.Repo{
-		Forge:    "bitbucket",
+		Forge:    c.forgeLabelOrDefault(),
 		Instance: c.Name(),
 		FullName: body.FullName,
 		URL:      body.Links.HTML.Href,
@@ -233,7 +253,7 @@ func (c *Client) ListRuns(ctx context.Context, fullName string) ([]operations.Ru
 			status = p.State.Result.Name
 		}
 		out = append(out, operations.Run{
-			Forge:    "bitbucket",
+			Forge:    c.forgeLabelOrDefault(),
 			Instance: c.Name(),
 			Repo:     fullName,
 			ID:       runIDFromUUID(p.UUID),
@@ -271,7 +291,7 @@ func (c *Client) ListProjects(ctx context.Context) ([]operations.Project, error)
 	out := make([]operations.Project, 0, len(body.Values))
 	for _, p := range body.Values {
 		out = append(out, operations.Project{
-			Forge:    "bitbucket",
+			Forge:    c.forgeLabelOrDefault(),
 			Instance: c.Name(),
 			FullName: p.Key,
 			URL:      p.Links.HTML.Href,
@@ -386,7 +406,7 @@ func (c *Client) ListPRs(ctx context.Context) ([]operations.PR, error) {
 		}
 		for _, pr := range body.Values {
 			out = append(out, operations.PR{
-				Forge:    "bitbucket",
+				Forge:    c.forgeLabelOrDefault(),
 				Instance: c.Name(),
 				Repo:     r.FullName,
 				Number:   int(pr.ID),
