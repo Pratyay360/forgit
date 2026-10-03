@@ -45,21 +45,30 @@ func isTerminal(w io.Writer) bool {
 
 func writePlainTable(w io.Writer, header []string, rows [][]string) error {
 	tw := tabwriter.NewWriter(w, 0, 4, 2, ' ', 0)
-	writeTabRow(tw, header)
+	if err := writeTabRow(tw, header); err != nil {
+		return err
+	}
 	for _, row := range rows {
-		writeTabRow(tw, row)
+		if err := writeTabRow(tw, row); err != nil {
+			return err
+		}
 	}
 	return tw.Flush()
 }
 
-func writeTabRow(w io.Writer, cells []string) {
+func writeTabRow(w io.Writer, cells []string) error {
 	for i, c := range cells {
 		if i > 0 {
-			fmt.Fprint(w, "\t")
+			if _, err := fmt.Fprint(w, "\t"); err != nil {
+				return err
+			}
 		}
-		fmt.Fprint(w, c)
+		if _, err := fmt.Fprint(w, c); err != nil {
+			return err
+		}
 	}
-	fmt.Fprintln(w)
+	_, err := fmt.Fprintln(w)
+	return err
 }
 
 func writeStyledTable(w io.Writer, header []string, rows [][]string) error {

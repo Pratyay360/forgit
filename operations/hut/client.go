@@ -21,8 +21,6 @@ import (
 	"github.com/pratyay360/forgit/operations"
 )
 
-// GraphQL endpoints per service (overridable so tests can point the client
-// at httptest servers).
 var (
 	gitAPIBase   = "https://git.sr.ht/query"
 	todoAPIBase  = "https://todo.sr.ht/query"

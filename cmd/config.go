@@ -55,8 +55,8 @@ func runConfig(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	out := cmd.OutOrStdout()
-	fmt.Fprintf(out, "Config file: %s\n\n", path)
-	fmt.Fprintln(out, "Forge instances:")
+	_, _ = fmt.Fprintf(out, "Config file: %s\n\n", path)
+	_, _ = fmt.Fprintln(out, "Forge instances:")
 	for _, f := range []struct {
 		name  string
 		ready bool
@@ -71,20 +71,20 @@ func runConfig(cmd *cobra.Command, args []string) error {
 		if f.ready {
 			status = "configured"
 		}
-		fmt.Fprintf(out, "  %-10s %s\n", f.name, status)
+		_, _ = fmt.Fprintf(out, "  %-10s %s\n", f.name, status)
 	}
 	for _, inst := range cfg.Instances {
 		status := "not configured"
 		if inst.Token != "" {
 			status = "configured"
 		}
-		fmt.Fprintf(out, "  %-10s (%s) %s\n", inst.Name, inst.Type, status)
+		_, _ = fmt.Fprintf(out, "  %-10s (%s) %s\n", inst.Name, inst.Type, status)
 	}
 	if !cfg.Enabled() {
-		fmt.Fprintln(out, "\nNo forge credentials configured. Create the file above with per-forge")
-		fmt.Fprintln(out, "tokens, or set the FORGIT_*_TOKEN environment variables. Example:")
-		fmt.Fprintln(out)
-		fmt.Fprint(out, sampleConfig)
+		_, _ = fmt.Fprintln(out, "\nNo forge credentials configured. Create the file above with per-forge")
+		_, _ = fmt.Fprintln(out, "tokens, or set the FORGIT_*_TOKEN environment variables. Example:")
+		_, _ = fmt.Fprintln(out)
+		_, _ = fmt.Fprint(out, sampleConfig)
 	}
 	warnUnusedSourceHutUsername(cmd.ErrOrStderr(), cfg)
 	return nil

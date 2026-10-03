@@ -313,7 +313,7 @@ func (c *Client) request(ctx context.Context, method, endpoint string, payload a
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode >= 400 {
 		return fmt.Errorf("bitbucket API %s: %s", endpoint, resp.Status)
 	}
@@ -336,7 +336,7 @@ func (c *Client) rawGet(ctx context.Context, endpoint, accept string) (string, *
 	if err != nil {
 		return "", nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode >= 400 {
 		return "", resp, fmt.Errorf("bitbucket API %s: %s", endpoint, resp.Status)
 	}
@@ -412,7 +412,7 @@ func (c *Client) get(ctx context.Context, endpoint string, out interface{}) erro
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode >= 400 {
 		return fmt.Errorf("bitbucket API %s: %s", endpoint, resp.Status)
 	}
