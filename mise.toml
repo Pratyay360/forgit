@@ -1,7 +1,11 @@
 [tools]
 go = "latest"
 "go:github.com/spf13/cobra-cli" = "latest"
+golangci-lint = "latest"
 golines = "latest"
 goreleaser = "latest"
 prettier = "latest"
 staticcheck = "latest"
+
+[tasks]
+release = "goreleaser release --clean"
