@@ -2,7 +2,7 @@
 
 version: 2
 
-project_name: ensor
+project_name: forgit
 
 before:
   hooks:
@@ -10,9 +10,9 @@ before:
     - go generate ./...
 
 builds:
-  - id: ensor
+  - id: forgit
     main: .
-    binary: ensor
+    binary: forgit
 
     env:
       - CGO_ENABLED=0
@@ -36,12 +36,12 @@ builds:
       - -trimpath
 
     ldflags:
-      - -s -w -X github.com/Pratyay360/ensor/cmd.version={{.Version}}
+      - -s -w -X github.com/Pratyay360/forgit /cmd.version={{.Version}}
 
 archives:
   - id: default
     ids:
-      - ensor
+      - forgit
 
     formats:
       - tar.gz
