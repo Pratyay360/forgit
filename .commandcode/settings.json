@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Shell(./forgit:*)"
+      "Shell(./forgit:*)",
+      "Shell(rm:*)"
     ],
     "deny": [],
     "defaultMode": "default"

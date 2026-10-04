@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pratyay360/forgit/internal/gitlocal"
+	"github.com/pratyay360/forgit/internal/jjclient"
 	"github.com/spf13/cobra"
 )
 
@@ -15,9 +15,9 @@ import (
 // repository, plus the local repository when the command needs one.
 type target struct {
 	Client forgeClient
-	Bound  gitlocal.BoundRepo
-	Local  *gitlocal.Repo
-	Auth   gitlocal.Authenticator
+	Bound  jjclient.BoundRepo
+	Local  *jjclient.Repo
+	Auth   jjclient.Authenticator
 }
 
 // RepoName returns the owner/name this target acts on.
@@ -26,8 +26,8 @@ func (t target) RepoName() string { return t.Bound.FullName() }
 // resolveTarget binds the command's --repo/--instance flags, or the local
 // repository's remotes, to a configured forge instance and its client.
 //
-// The local repository is optional: commands that only talk to the API work
-// outside a clone as long as --repo names the repository. Commands that need
+// The local repository is only opened when one exists, and its absence is not
+// an error yet: --repo may supply the binding instead. Commands that need
 // local git requireOne calls with requireLocal afterwards.
 func resolveTarget(cmd *cobra.Command) (target, error) {
 	cfg, err := loadConfig(cmd)
@@ -51,22 +51,22 @@ func resolveTarget(cmd *cobra.Command) (target, error) {
 
 	// A local repository is only opened when one exists, and its absence is not
 	// an error yet: --repo may supply the binding instead.
-	var local *gitlocal.Repo
+	var local *jjclient.Repo
 	dir := workDir(cmd)
-	if gitlocal.Exists(dir) {
-		opened, err := gitlocal.Open(dir)
+	if jjclient.Exists(dir) {
+		opened, err := jjclient.Open(dir)
 		if err != nil {
 			return target{}, err
 		}
 		local = opened
 	}
 
-	bindOpts := gitlocal.BindOptions{Instance: instFlag, Repo: repoFlag}
+	bindOpts := jjclient.BindOptions{Instance: instFlag, Repo: repoFlag}
 	if repoFlag == "" && local == nil {
 		return target{}, fmt.Errorf("not inside a git repository; run inside a clone or pass --repo owner/name (with --instance when several forges are configured)")
 	}
 
-	ctx, err := gitlocal.Bind(local, cfg, bindOpts)
+	ctx, err := jjclient.Bind(local, cfg, bindOpts)
 	if err != nil {
 		return target{}, err
 	}

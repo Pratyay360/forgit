@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/pratyay360/forgit/internal/gitlocal"
+	"github.com/pratyay360/forgit/internal/jjclient"
 	"github.com/spf13/cobra"
 )
 
@@ -57,8 +57,8 @@ func runGitStatus(cmd *cobra.Command, args []string) error {
 }
 
 // openLocalRepo opens the repository rooted at dir (default .).
-func openLocalRepo(cmd *cobra.Command) (*gitlocal.Repo, error) {
-	return gitlocal.Open(workDir(cmd))
+func openLocalRepo(cmd *cobra.Command) (*jjclient.Repo, error) {
+	return jjclient.Open(workDir(cmd))
 }
 
 var gitLogCmd = &cobra.Command{

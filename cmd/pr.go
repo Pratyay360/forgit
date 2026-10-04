@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pratyay360/forgit/internal/gitlocal"
+	"github.com/pratyay360/forgit/internal/jjclient"
 	"github.com/pratyay360/forgit/operations"
 	"github.com/spf13/cobra"
 )
@@ -324,7 +324,7 @@ func runPRCheckout(cmd *cobra.Command, args []string) error {
 		defer func() { _ = t.Local.RemoveRemote(forkName) }()
 	}
 
-	if err := t.Local.CheckoutPR(ctx, t.Auth, gitlocal.CheckoutOptions{
+	if err := t.Local.CheckoutPR(ctx, t.Auth, jjclient.CheckoutOptions{
 		Spec:   spec,
 		Detach: boolFlag(cmd, "detach"),
 		Force:  boolFlag(cmd, "force"),
