@@ -122,7 +122,7 @@ func runPRList(cmd *cobra.Command, args []string) error {
 	if err := writeTable(cmd.OutOrStdout(), []string{"FORGE", "REPOSITORY", "#", "STATE", "TITLE", "URL"}, rows); err != nil {
 		return err
 	}
-	fmt.Fprintf(cmd.ErrOrStderr(), "%d pull requests from %d forges\n", len(all), ok)
+	_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "%d pull requests from %d forges\n", len(all), ok)
 	return nil
 }
 
@@ -176,31 +176,31 @@ func runPRView(cmd *cobra.Command, args []string) error {
 // renderPRDetail formats a pull request for display.
 func renderPRDetail(out io.Writer, pr operations.PRDetail) {
 	if pr.State == "" {
-		fmt.Fprintln(out, pr.Title)
+		_, _ = fmt.Fprintln(out, pr.Title)
 		return
 	}
 	draft := ""
 	if pr.Draft {
 		draft = " (draft)"
 	}
-	fmt.Fprintf(out, "%s%s\n", pr.Title, draft)
-	fmt.Fprintf(out, "%s #%d  %s  %s\n", pr.URL, pr.Number, pr.State, strings.ToLower(pr.Forge))
+	_, _ = fmt.Fprintf(out, "%s%s\n", pr.Title, draft)
+	_, _ = fmt.Fprintf(out, "%s #%d  %s  %s\n", pr.URL, pr.Number, pr.State, strings.ToLower(pr.Forge))
 	if pr.Author != "" {
-		fmt.Fprintf(out, "author: %s\n", pr.Author)
+		_, _ = fmt.Fprintf(out, "author: %s\n", pr.Author)
 	}
 	if pr.BaseBranch != "" {
-		fmt.Fprintf(out, "base:  %s\n", pr.BaseBranch)
+		_, _ = fmt.Fprintf(out, "base:  %s\n", pr.BaseBranch)
 	}
 	if pr.HeadBranch != "" {
 		owner := pr.HeadOwner
 		if owner == "" {
 			owner = pr.Author
 		}
-		fmt.Fprintf(out, "head:  %s/%s\n", owner, pr.HeadBranch)
+		_, _ = fmt.Fprintf(out, "head:  %s/%s\n", owner, pr.HeadBranch)
 	}
 	if pr.Body != "" {
-		fmt.Fprintln(out)
-		fmt.Fprintln(out, pr.Body)
+		_, _ = fmt.Fprintln(out)
+		_, _ = fmt.Fprintln(out, pr.Body)
 	}
 }
 
@@ -331,7 +331,9 @@ func runPRCheckout(cmd *cobra.Command, args []string) error {
 	}); err != nil {
 		return err
 	}
-	fmt.Fprintf(cmd.OutOrStdout(), "checked out %s #%d as %s\n", t.Bound.Forge, number, describeLocalBranch(spec, boolFlag(cmd, "detach")))
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "checked out %s #%d as %s\n", t.Bound.Forge, number, describeLocalBranch(spec, boolFlag(cmd, "detach"))); err != nil {
+		return err
+	}
 	return nil
 }
 

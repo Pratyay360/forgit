@@ -4,8 +4,6 @@ go = "latest"
 golangci-lint = "latest"
 golines = "latest"
 goreleaser = "latest"
-prettier = "latest"
-staticcheck = "latest"
 
 [tasks]
 fetch = "go install"

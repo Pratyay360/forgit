@@ -175,9 +175,9 @@ func (r *Repo) RemoveRemote(name string) error {
 
 // CheckoutOptions controls CheckoutPR.
 type CheckoutOptions struct {
-	Spec        operations.FetchSpec
-	Detach      bool
-	Force       bool
+	Spec   operations.FetchSpec
+	Detach bool
+	Force  bool
 }
 
 // CheckoutPR fetches a remote pull request head and checks it out locally.

@@ -116,7 +116,7 @@ func warnUnusedSourceHutUsername(w io.Writer, cfg operations.Config) {
 	if cfg.SourceHut.Username == "" {
 		return
 	}
-	fmt.Fprintf(w, "note: sourcehut: username is no longer needed — the GraphQL API resolves your account from the token. Remove it from [sourcehut] or unset %s.\n", operations.EnvSourceHutUsername)
+	_, _ = fmt.Fprintf(w, "note: sourcehut: username is no longer needed — the GraphQL API resolves your account from the token. Remove it from [sourcehut] or unset %s.\n", operations.EnvSourceHutUsername)
 }
 
 // configFlag returns the value of the global --config flag. During real cobra

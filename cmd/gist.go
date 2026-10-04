@@ -85,6 +85,8 @@ func runGistCreate(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(cmd.OutOrStdout(), "%s  %s\n", gist.URL, gist.Description)
+	if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s  %s\n", gist.URL, gist.Description); err != nil {
+		return err
+	}
 	return nil
 }

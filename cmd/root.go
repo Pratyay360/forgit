@@ -29,7 +29,7 @@ var version = "dev"
 var rootCmd = &cobra.Command{
 	Use:     "forgit",
 	Version: version,
-	Short: "A unified CLI for your git forges",
+	Short:   "A unified CLI for your git forges",
 	Long: `forgit is a unified command-line client for GitHub, GitLab, Forgejo,
 SourceHut and Bitbucket. With one config file (or environment variables) it
 aggregates repositories, issues and pull requests from every forge you use,

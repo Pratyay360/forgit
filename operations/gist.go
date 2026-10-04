@@ -10,10 +10,10 @@ import (
 
 // Gist is a GitHub Gist.
 type Gist struct {
-	ID          string            `json:"id"`
-	Description string            `json:"description"`
-	Public      bool              `json:"public"`
-	URL         string            `json:"html_url"`
+	ID          string              `json:"id"`
+	Description string              `json:"description"`
+	Public      bool                `json:"public"`
+	URL         string              `json:"html_url"`
 	Files       map[string]GistFile `json:"files"`
 }
 
@@ -69,7 +69,7 @@ func (c *Client) Create(ctx context.Context, in GistInput) (Gist, error) {
 	if err != nil {
 		return Gist{}, fmt.Errorf("creating gist: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusCreated {
 		return Gist{}, fmt.Errorf("creating gist: unexpected status %d", resp.StatusCode)
@@ -83,8 +83,8 @@ func (c *Client) Create(ctx context.Context, in GistInput) (Gist, error) {
 }
 
 type gistCreateRequest struct {
-	Description string              `json:"description"`
-	Public      bool                `json:"public"`
+	Description string                   `json:"description"`
+	Public      bool                     `json:"public"`
 	Files       map[string]gistFileInput `json:"files"`
 }
 

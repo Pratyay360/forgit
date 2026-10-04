@@ -63,10 +63,10 @@ func runIssueList(cmd *cobra.Command, args []string) error {
 		issues, err := c.ListIssues(ctx)
 		if err != nil {
 			if errors.Is(err, operations.ErrIssuesUnsupported) {
-				fmt.Fprintf(cmd.ErrOrStderr(), "note: %s: %v\n", c.Name(), err)
+				_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "note: %s: %v\n", c.Name(), err)
 				continue
 			}
-			fmt.Fprintf(cmd.ErrOrStderr(), "warning: %s: %v\n", c.Name(), err)
+			_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "warning: %s: %v\n", c.Name(), err)
 			failed++
 			continue
 		}
@@ -108,7 +108,7 @@ func runIssueList(cmd *cobra.Command, args []string) error {
 	if err := writeTable(cmd.OutOrStdout(), []string{"FORGE", "REPOSITORY", "#", "STATE", "TITLE", "URL"}, rows); err != nil {
 		return err
 	}
-	fmt.Fprintf(cmd.ErrOrStderr(), "%d issues from %d forges\n", len(all), ok)
+	_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "%d issues from %d forges\n", len(all), ok)
 	return nil
 }
 
@@ -148,23 +148,23 @@ func runIssueView(cmd *cobra.Command, args []string) error {
 // renderIssueDetail formats an issue for display.
 func renderIssueDetail(out io.Writer, is operations.IssueDetail) {
 	if is.State == "" {
-		fmt.Fprintln(out, is.Title)
+		_, _ = fmt.Fprintln(out, is.Title)
 		return
 	}
-	fmt.Fprintf(out, "%s\n", is.Title)
-	fmt.Fprintf(out, "%s #%d  %s  %s\n", is.URL, is.Number, is.State, strings.ToLower(is.Forge))
+	_, _ = fmt.Fprintf(out, "%s\n", is.Title)
+	_, _ = fmt.Fprintf(out, "%s #%d  %s  %s\n", is.URL, is.Number, is.State, strings.ToLower(is.Forge))
 	if is.Author != "" {
-		fmt.Fprintf(out, "author: %s\n", is.Author)
+		_, _ = fmt.Fprintf(out, "author: %s\n", is.Author)
 	}
 	if len(is.Labels) > 0 {
-		fmt.Fprintf(out, "labels: %s\n", strings.Join(is.Labels, ", "))
+		_, _ = fmt.Fprintf(out, "labels: %s\n", strings.Join(is.Labels, ", "))
 	}
 	if len(is.Assignees) > 0 {
-		fmt.Fprintf(out, "assigned: %s\n", strings.Join(is.Assignees, ", "))
+		_, _ = fmt.Fprintf(out, "assigned: %s\n", strings.Join(is.Assignees, ", "))
 	}
 	if is.Body != "" {
-		fmt.Fprintln(out)
-		fmt.Fprintln(out, is.Body)
+		_, _ = fmt.Fprintln(out)
+		_, _ = fmt.Fprintln(out, is.Body)
 	}
 }
 

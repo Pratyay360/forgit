@@ -47,11 +47,15 @@ func runGitStatus(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	if len(changes) == 0 {
-		fmt.Fprintln(cmd.OutOrStdout(), "clean")
+		if _, err := fmt.Fprintln(cmd.OutOrStdout(), "clean"); err != nil {
+			return err
+		}
 		return nil
 	}
 	for _, c := range changes {
-		fmt.Fprintln(cmd.OutOrStdout(), c.String())
+		if _, err := fmt.Fprintln(cmd.OutOrStdout(), c.String()); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -82,7 +86,9 @@ func runGitLog(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	for _, e := range entries {
-		fmt.Fprintf(cmd.OutOrStdout(), "%s  %s  %s  %s\n", e.Short, e.When.Format("2006-01-02"), e.Author, e.Subject)
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s  %s  %s  %s\n", e.Short, e.When.Format("2006-01-02"), e.Author, e.Subject); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -139,7 +145,9 @@ func runGitBranch(cmd *cobra.Command, args []string) error {
 		if b.IsHead {
 			marker = "*"
 		}
-		fmt.Fprintf(cmd.OutOrStdout(), "%s %s\n", marker, b.Short)
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s %s\n", marker, b.Short); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -171,7 +179,9 @@ func runGitRemote(cmd *cobra.Command, args []string) error {
 		if err := repo.AddRemote(name, url); err != nil {
 			return err
 		}
-		fmt.Fprintf(cmd.OutOrStdout(), "added remote %s\n", name)
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "added remote %s\n", name); err != nil {
+			return err
+		}
 		return nil
 	case boolFlag(cmd, "remove"):
 		name := flagString(cmd, "name")
@@ -181,7 +191,9 @@ func runGitRemote(cmd *cobra.Command, args []string) error {
 		if err := repo.RemoveRemote(name); err != nil {
 			return err
 		}
-		fmt.Fprintf(cmd.OutOrStdout(), "removed remote %s\n", name)
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "removed remote %s\n", name); err != nil {
+			return err
+		}
 		return nil
 	}
 	remotes, err := repo.Remotes()
@@ -189,7 +201,9 @@ func runGitRemote(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	for _, r := range remotes {
-		fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\n", r.Name, r.URL())
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s\t%s\n", r.Name, r.URL()); err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -127,7 +127,9 @@ func runRepoCreate(cmd *cobra.Command, args []string) error {
 			if in.Private {
 				vis = "private"
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "dry-run: %s: would create %s/%s (%s)\n", c.Name(), owner, name, vis)
+			if _, err := fmt.Fprintf(cmd.OutOrStdout(), "dry-run: %s: would create %s/%s (%s)\n", c.Name(), owner, name, vis); err != nil {
+				return err
+			}
 			continue
 		}
 		repo, err := c.CreateRepo(ctx, in)
@@ -136,7 +138,9 @@ func runRepoCreate(cmd *cobra.Command, args []string) error {
 			continue
 		}
 		created = append(created, repo)
-		fmt.Fprintf(cmd.OutOrStdout(), "%s: created %s\n", c.Name(), repo.URL)
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s: created %s\n", c.Name(), repo.URL); err != nil {
+			return err
+		}
 	}
 	if !dryRun && len(created) == 0 {
 		return fmt.Errorf("no repositories created: every forge failed")
@@ -160,7 +164,9 @@ func runRepoRename(cmd *cobra.Command, args []string) error {
 			continue
 		}
 		renamed = append(renamed, repo)
-		fmt.Fprintf(cmd.OutOrStdout(), "%s: renamed %s -> %s\n", c.Name(), fullName, repo.FullName)
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s: renamed %s -> %s\n", c.Name(), fullName, repo.FullName); err != nil {
+			return err
+		}
 	}
 	if len(renamed) == 0 {
 		return fmt.Errorf("no repositories renamed: every forge failed")
@@ -171,7 +177,9 @@ func runRepoRename(cmd *cobra.Command, args []string) error {
 func runRepoDelete(cmd *cobra.Command, args []string) error {
 	if !boolFlag(cmd, "yes") {
 		if !confirm(fmt.Sprintf("delete %q on %s?", args[0], "the configured forges")) {
-			fmt.Fprintln(cmd.OutOrStdout(), "aborted")
+			if _, err := fmt.Fprintln(cmd.OutOrStdout(), "aborted"); err != nil {
+				return err
+			}
 			return nil
 		}
 	}
@@ -190,7 +198,9 @@ func runRepoDelete(cmd *cobra.Command, args []string) error {
 			continue
 		}
 		deleted++
-		fmt.Fprintf(cmd.OutOrStdout(), "%s: deleted %s\n", c.Name(), fullName)
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s: deleted %s\n", c.Name(), fullName); err != nil {
+			return err
+		}
 	}
 	if deleted == 0 {
 		return fmt.Errorf("no repositories deleted: every forge failed")
@@ -227,7 +237,9 @@ func runRepoVisibility(cmd *cobra.Command, args []string) error {
 		if repo.Private {
 			vis = "private"
 		}
-		fmt.Fprintf(cmd.OutOrStdout(), "%s: %s is now %s\n", c.Name(), repo.FullName, vis)
+		if _, err := fmt.Fprintf(cmd.OutOrStdout(), "%s: %s is now %s\n", c.Name(), repo.FullName, vis); err != nil {
+			return err
+		}
 	}
 	if len(updated) == 0 {
 		return fmt.Errorf("no repositories updated: every forge failed")
