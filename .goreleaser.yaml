@@ -157,16 +157,6 @@ winget:
       name: winget-pkgs
       branch: main
 
-aurs:
-  - homepage: "https://github.com/pratyay360/forgit"
-    description: "A simple git helper"
-    maintainers:
-      - "pratyay360 <pratyaymustafi@outlook.com>"
-    license: Apache-2.0
-    private_key: "{{ .Env.AUR_KEY }}"
-    git_url: "ssh://aur@aur.archlinux.org/forgit-bin.git"
-    commit_msg_template: "Update to {{ .Tag }}"
-    skip_upload: true
 
 release:
   github:
