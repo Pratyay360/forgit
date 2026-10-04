@@ -21,9 +21,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// version is set at build time via ldflags (see .goreleaser.yaml).
+// Defaults to "dev" for local builds.
+var version = "dev"
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "forgit",
+	Use:     "forgit",
+	Version: version,
 	Short: "A unified CLI for your git forges",
 	Long: `forgit is a unified command-line client for GitHub, GitLab, Forgejo,
 SourceHut and Bitbucket. With one config file (or environment variables) it

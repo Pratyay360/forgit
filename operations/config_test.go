@@ -5,9 +5,6 @@ import (
 	"testing"
 )
 
-// TestConfigValidateRejectsUnknownDriver guards the public contract: a
-// [[instance]] entry whose driver is not a built-in forge must be rejected
-// at load time, not silently ignored.
 func TestConfigValidateRejectsUnknownDriver(t *testing.T) {
 	cfg := Config{
 		Instances: []Instance{
@@ -23,9 +20,6 @@ func TestConfigValidateRejectsUnknownDriver(t *testing.T) {
 	}
 }
 
-// TestConfigValidateAcceptsAliases confirms a Driver value matching a known
-// driver passes validation, including the case where Driver and Type differ
-// (the Gitea-as-Forgejo use case).
 func TestConfigValidateAcceptsAliases(t *testing.T) {
 	cases := []Instance{
 		{Name: "gitea", Type: "gitea", Driver: "forgejo"},

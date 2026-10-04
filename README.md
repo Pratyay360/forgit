@@ -50,6 +50,16 @@ go install github.com/pratyay360/forgit@latest
 
 The result is a binary called `forgit` in your `$GOBIN`.
 
+Other marketplaces:
+
+- macOS (Homebrew): `brew install --cask Pratyay360/tap/forgit`
+- Windows (Scoop): `scoop bucket add forgit https://github.com/Pratyay360/scoop-bucket && scoop install forgit`
+- Windows (winget): `winget install Pratyay360.forgit`
+- Arch Linux (AUR): `yay -S forgit-bin` (or your favourite AUR helper)
+- conda: `conda install -c conda-forge forgit`
+- Debian/Ubuntu, Fedora/RHEL, Alpine: `.deb`, `.rpm` and `.apk` packages are
+  attached to every GitHub release.
+
 ## Configure
 
 Create `~/.config/forgit/config.toml`:

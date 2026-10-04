@@ -121,13 +121,56 @@ homebrew_casks:
     commit_msg_template: "Brew cask update for {{ .ProjectName }} version {{ .Tag }}"
 
     repository:
-      owner: Pratyay360
+      owner: pratyay360
       name: homebrew-tap
       branch: main
 
+
+scoops:
+  - name: forgit
+    homepage: "https://github.com/pratyay360/forgit"
+    description: "A simple git helper"
+    license: Apache-2.0
+    commit_msg_template: "Scoop update for {{ .ProjectName }} version {{ .Tag }}"
+    skip_upload: true
+
+    repository:
+      owner: pratyay360
+      name: scoop-bucket
+      branch: main
+
+winget:
+  - name: forgit
+    publisher: pratyay360
+    publisher_url: "https://github.com/pratyay360"
+    publisher_support_url: "https://github.com/pratyay360/forgit/issues"
+    package_identifier: pratyay360.forgit
+    short_description: "A simple git helper"
+    description: "A unified CLI for your git forges"
+    license: Apache-2.0
+    homepage: "https://github.com/pratyay360/forgit"
+    commit_msg_template: "{{ .PackageIdentifier }}: {{ .Tag }}"
+    skip_upload: true
+
+    repository:
+      owner: pratyay360
+      name: winget-pkgs
+      branch: main
+
+aurs:
+  - homepage: "https://github.com/pratyay360/forgit"
+    description: "A simple git helper"
+    maintainers:
+      - "pratyay360 <pratyaymustafi@outlook.com>"
+    license: Apache-2.0
+    private_key: "{{ .Env.AUR_KEY }}"
+    git_url: "ssh://aur@aur.archlinux.org/forgit-bin.git"
+    commit_msg_template: "Update to {{ .Tag }}"
+    skip_upload: true
+
 release:
   github:
-    owner: Pratyay360
+    owner: pratyay360
     name: forgit
 
 snapshot:
