@@ -1,0 +1,48 @@
+{% set name = "forgit" %}
+{% set version = "0.2" %}
+
+# To submit this to conda-forge:
+#   1. Fill in sha256 below: curl -sL https://github.com/Pratyay360/forgit/archive/refs/tags/v{{ version }}.tar.gz | sha256sum
+#   2. Open a PR against https://github.com/conda-forge/staged-recipes adding
+#      this file as recipes/forgit/meta.yaml (one directory per recipe).
+#   3. Once merged, conda-forge creates conda-forge/forgit-feedstock. Add
+#      yourself as maintainer there; the conda-forge bot then opens automatic
+#      version-update PRs on every new GitHub release.
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://github.com/Pratyay360/forgit/archive/refs/tags/v{{ version }}.tar.gz
+  sha256: 393953b0f22990df0136c00c43e3dd8669654278eefbe9282f49842233d869d5
+
+build:
+  number: 0
+  script:
+    - export CGO_ENABLED=0
+    - go build -trimpath -ldflags "-s -w" -o ${PREFIX}/bin/forgit .
+
+requirements:
+  build:
+    - {{ compiler('go') }}
+
+test:
+  commands:
+    - forgit --version
+
+about:
+  home: https://github.com/Pratyay360/forgit
+  license: Apache-2.0
+  license_file: LICENSE
+  summary: A unified CLI for all your git forges
+  description: |
+    forgit is a unified command-line client for GitHub, GitLab, Forgejo,
+    SourceHut and Bitbucket. With one config file it aggregates
+    repositories, issues and pull requests from every forge you use.
+  doc_url: https://github.com/Pratyay360/forgit
+  dev_url: https://github.com/Pratyay360/forgit
+
+extra:
+  recipe-maintainers:
+    - pratyay360
