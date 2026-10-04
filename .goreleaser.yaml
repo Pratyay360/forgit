@@ -88,7 +88,7 @@ nfpms:
   - id: packages
     package_name: forgit
     description: "A simple git helper"
-    homepage: "https://github.com/Pratyay360/forgit"
+    homepage: "https://github.com/pratyay360/forgit"
     maintainer: "Pratyay360 <pratyaymustafi@outlook.com>"
     license: Apache-2.0
 
@@ -99,7 +99,7 @@ nfpms:
 
 homebrew_casks:
   - name: forgit
-    homepage: "https://github.com/Pratyay360/forgit"
+    homepage: "https://github.com/pratyay360/forgit"
     description: "A simple git helper"
     license: Apache-2.0
 
