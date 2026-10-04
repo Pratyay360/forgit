@@ -131,7 +131,7 @@ scoops:
     description: "A simple git helper"
     license: Apache-2.0
     commit_msg_template: "Scoop update for {{ .ProjectName }} version {{ .Tag }}"
-    skip_upload: true
+    skip_upload: false
 
     repository:
       owner: pratyay360
@@ -149,7 +149,7 @@ winget:
     license: Apache-2.0
     homepage: "https://github.com/pratyay360/forgit"
     commit_msg_template: "{{ .PackageIdentifier }}: {{ .Tag }}"
-    skip_upload: true
+    skip_upload: false
 
     repository:
       owner: pratyay360
