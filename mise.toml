@@ -8,4 +8,5 @@ prettier = "latest"
 staticcheck = "latest"
 
 [tasks]
+fetch = "go install"
 release = "goreleaser release --clean"
