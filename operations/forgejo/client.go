@@ -246,13 +246,6 @@ func (c *Client) ListRuns(ctx context.Context, fullName string) ([]operations.Ru
 // definitions, in precedence order.
 var workflowDirs = []string{".forgejo/workflows", ".github/workflows"}
 
-// ListWorkflows lists Actions workflow definitions for a repository.
-// fullName is owner/name.
-//
-// Forgejo has no endpoint that enumerates workflows (unlike GitHub's
-// /actions/workflows), so the workflow directories are listed from the default
-// branch instead. Forgejo reads .forgejo/workflows first and falls back to
-// .github/workflows; both are reported here, deduplicated by file name.
 func (c *Client) ListWorkflows(ctx context.Context, fullName string) ([]operations.Workflow, error) {
 	owner, name, ok := splitFullName(fullName)
 	if !ok {

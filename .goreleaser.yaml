@@ -97,7 +97,7 @@ nfpms:
       - apk
 
 homebrew_casks:
-  - name: forgit
+  - name: forgit-cli
     homepage: "https://github.com/Pratyay360/forgit"
     description: "A simple git helper"
     license: Apache-2.0
@@ -126,7 +126,7 @@ homebrew_casks:
 
 
 scoops:
-  - name: forgit
+  - name: forgit-cli
     homepage: "https://github.com/Pratyay360/forgit"
     description: "A simple git helper"
     license: Apache-2.0
@@ -139,7 +139,7 @@ scoops:
       branch: main
 
 winget:
-  - name: forgit
+  - name: forgit-cli
     publisher: Pratyay360
     publisher_url: "https://github.com/Pratyay360"
     publisher_support_url: "https://github.com/Pratyay360/forgit/issues"
