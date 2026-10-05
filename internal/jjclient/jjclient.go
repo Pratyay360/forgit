@@ -21,8 +21,6 @@ type Repo struct {
 	path string
 }
 
-// Open opens the repository containing dir, walking up parent directories
-// the way git does when run inside a subdirectory of a worktree.
 func Open(dir string) (*Repo, error) {
 	abs, err := filepath.Abs(dir)
 	if err != nil {
@@ -217,7 +215,7 @@ func (r *Repo) CheckoutPR(ctx context.Context, auth Authenticator, opts Checkout
 	return nil
 }
 
-func (r *Repo) resolveHead(remote string, spec operations.FetchSpec) (string, error) {
+func (r *Repo) resolveHead(_ string, spec operations.FetchSpec) (string, error) {
 	if spec.HeadSHA != "" {
 		// Verify the SHA is available locally.
 		if _, err := r.jj("log", "-r", spec.HeadSHA); err == nil {

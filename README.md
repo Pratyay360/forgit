@@ -1,12 +1,11 @@
-# forgit — One CLI. Multiple Git forges.
-
 ![forgit — One CLI. Multiple Git forges.](https://shieldcn.dev/header/gradient.svg?title=forgit&subtitle=One+CLI.+Multiple+Git+forges.&mode=dark)
 
 **Interact with different Git forges from your terminal.**
 
 `forgit` is a simple command-line tool for developers working across Git forges.
 
-[Install forgit](#installation) · [Latest release](https://github.com/Pratyay360/forgit/releases/latest) · [Report a bug](https://github.com/Pratyay360/forgit/issues/new) · [Request a feature](https://github.com/Pratyay360/forgit/issues/new)
+[Install forgit](#installation) · [Latest release](https://github.com/Pratyay360/forgit/releases/latest) ·
+[Report a bug](https://github.com/Pratyay360/forgit/issues/new) · [Request a feature](https://github.com/Pratyay360/forgit/issues/new)
 
 [![GitHub stars](https://shieldcn.dev/github/stars/Pratyay360/forgit.svg?variant=secondary)](https://github.com/Pratyay360/forgit/stargazers)
 [![GitHub forks](https://shieldcn.dev/github/forks/Pratyay360/forgit.svg?variant=secondary)](https://github.com/Pratyay360/forgit/forks)
@@ -44,8 +43,8 @@ brew install pratyay360/tap/forgit
 ### Scoop
 
 ```powershell
-scoop bucket add pratyay360
-scoop install pratyay360.forgit
+scoop bucket add pratyay360 https://github.com/Pratyay360/scoop-bucket
+scoop install pratyay360/forgit
 ```
 
 ### WinGet
@@ -58,6 +57,8 @@ Prefer a direct download? Browse the [latest release](https://github.com/Pratyay
 
 ## Support forgit
 
-If `forgit` is useful to you, [give it a star on GitHub](https://github.com/Pratyay360/forgit) and share it with someone who works across Git forges.
+If `forgit` is useful to you, [give it a star on GitHub](https://github.com/Pratyay360/forgit)
+and share it with someone who works across Git forges.
 
-Have an idea or found a bug? [Open an issue](https://github.com/Pratyay360/forgit/issues). Feedback and contributions are welcome.
+Have an idea or found a bug? [Open an issue](https://github.com/Pratyay360/forgit/issues). 
+Feedback and contributions are welcome.

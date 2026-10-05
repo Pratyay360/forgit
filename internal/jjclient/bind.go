@@ -68,7 +68,6 @@ func Bind(local *Repo, cfg operations.Config, opts BindOptions) (BindResult, err
 
 	ordered := orderRemotes(remotes)
 	var hosts []CandidateHost
-	var firstErr error
 	for _, rem := range ordered {
 		for _, raw := range rem.URLs {
 			host := urlHost(raw)
@@ -89,10 +88,6 @@ func Bind(local *Repo, cfg operations.Config, opts BindOptions) (BindResult, err
 				Auth:  authFor(inst, raw),
 			}, nil
 		}
-	}
-
-	if firstErr != nil {
-		return BindResult{}, firstErr
 	}
 	return BindResult{}, explainNoMatch(ordered, hosts, instances)
 }
