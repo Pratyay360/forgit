@@ -12,12 +12,6 @@ import (
 	"github.com/pratyay360/forgit/operations/hut"
 )
 
-// forgeClient is implemented by every forge-specific client. It holds only the
-// operations every supported forge genuinely provides. Anything richer — pull
-// request lifecycle, issue writes, diffs — lives in the capability interfaces
-// below, which commands reach through a type assertion. Keeping the two apart
-// means a forge only implements what it actually supports instead of filling a
-// dozen methods with not-supported stubs.
 type forgeClient interface {
 	Name() string
 	ListRepos(context.Context) ([]operations.Repo, error)
@@ -45,8 +39,6 @@ type prWriter interface {
 	MergePR(ctx context.Context, repo string, number int, opts operations.MergeOptions) error
 }
 
-// prChecker is the pull request readiness toggle, available on forges with a
-// draft concept. Forges without one simply do not implement it.
 type prChecker interface {
 	SetPRReady(ctx context.Context, repo string, number int, ready bool) error
 }
@@ -56,9 +48,6 @@ type prDiffer interface {
 	PRDiff(ctx context.Context, repo string, number int) (string, error)
 }
 
-// prFetcher describes how to fetch a pull request head into a local
-// repository. Forges that publish a pull request ref namespace return that
-// refspec; forges that do not resolve the head commit through the API instead.
 type prFetcher interface {
 	FetchSpec(ctx context.Context, repo string, number int) (operations.FetchSpec, error)
 }

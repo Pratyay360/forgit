@@ -9,7 +9,6 @@ type Authenticator interface {
 	Name() string
 }
 
-// authFor builds the git credential for an instance.
 func authFor(inst operations.Instance, remoteURL string) Authenticator {
 	if isSSH(remoteURL) {
 		return nil

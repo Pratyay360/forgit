@@ -45,10 +45,8 @@ func New(cfg operations.ForgejoConfig) (*Client, error) {
 	}, nil
 }
 
-// SetInstance names this client's instance (default: the forge type).
 func (c *Client) SetInstance(name string) { c.instance = name }
 
-// Name returns the instance name.
 func (c *Client) Name() string {
 	if c.instance != "" {
 		return c.instance
