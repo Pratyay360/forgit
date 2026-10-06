@@ -115,7 +115,6 @@ homebrew_casks:
         - bash
         - zsh
         - fish
-        - nu
 
     directory: Casks
     commit_msg_template: "Brew cask update for {{ .ProjectName }} version {{ .Tag }}"
