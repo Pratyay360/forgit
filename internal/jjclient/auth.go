@@ -4,7 +4,6 @@ import (
 	"github.com/pratyay360/forgit/operations"
 )
 
-// Authenticator is the credential used for git transport operations.
 type Authenticator interface {
 	Name() string
 }

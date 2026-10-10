@@ -24,8 +24,9 @@ url = "https://codeberg.org"  # optional, defaults to codeberg.org
 token = "..."
 
 [bitbucket]
-token = "..."
-username = "you"
+token = "..."  # API token or app password — REQUIRES username below (Basic auth)
+username = "you@example.com"  # required for API tokens/app passwords: your Atlassian account email; only omit for OAuth/workspace/project/repo access tokens (Bearer)
+workspace = "your-workspace"  # optional: default workspace slug (e.g. your Bitbucket username)
 
 # Additional instances of any forge type (e.g. a second GitLab server):
 [[instance]]

@@ -175,8 +175,6 @@ func (c *Client) SetVisibility(ctx context.Context, fullName string, private boo
 	}, nil
 }
 
-// getAPI performs a GET against the instance's /api/v1 surface and decodes
-// the JSON body into out. Used for endpoints the SDK does not expose.
 func (c *Client) getAPI(ctx context.Context, endpoint string, out any) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/api/v1"+endpoint, nil)
 	if err != nil {
@@ -197,11 +195,6 @@ func (c *Client) getAPI(ctx context.Context, endpoint string, out any) error {
 	return json.NewDecoder(resp.Body).Decode(out)
 }
 
-// ListRuns lists Actions task runs for a repository. fullName is owner/name.
-//
-// The SDK does not wrap the Actions API, so /repos/{owner}/{repo}/actions/tasks
-// is called directly. Tasks carry the workflow name, branch and run number,
-// which map onto the unified Run shape.
 func (c *Client) ListRuns(ctx context.Context, fullName string) ([]operations.Run, error) {
 	owner, name, ok := splitFullName(fullName)
 	if !ok {

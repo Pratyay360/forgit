@@ -124,7 +124,7 @@ func clients(cfg operations.Config) ([]forgeClient, error) {
 			c.SetForgeLabel(inst.Type)
 			cs = append(cs, c)
 		case "bitbucket":
-			c, err := bitbucket.New(operations.BitbucketConfig{Token: inst.Token, Username: inst.Username})
+			c, err := bitbucket.New(operations.BitbucketConfig{Token: inst.Token, Username: inst.Username, Workspace: inst.Workspace})
 			if err != nil {
 				return nil, fmt.Errorf("%s: %w", inst.Name, err)
 			}

@@ -40,7 +40,7 @@ Per-forge environment variables:
   FORGIT_FORGEJO_URL=          (optional, for self-hosted)
   FORGIT_SOURCEHUT_TOKEN=
   FORGIT_BITBUCKET_TOKEN=
-  FORGIT_BITBUCKET_USERNAME=   (required for the bitbucket client)
+  FORGIT_BITBUCKET_USERNAME=   (optional: Atlassian email for Basic auth; omit for Bearer-only API token)
 
 Multiple instances of the same forge are supported via the [[instance]]
 table in the config file, each entry setting a unique `name` and `token`.

@@ -34,8 +34,6 @@ const maxPages = 100
 // errStuckCursor is returned when a pagination loop exceeds maxPages.
 var errStuckCursor = fmt.Errorf("server kept returning a cursor (more than %d pages)", maxPages)
 
-// Client talks to the SourceHut GraphQL services on behalf of the configured
-// user.
 type Client struct {
 	token      string
 	http       *http.Client
@@ -208,9 +206,9 @@ func (c *Client) ListRepos(ctx context.Context) ([]operations.Repo, error) {
 	}
 }
 
-const createRepoMutation = `mutation($input: CreateRepositoryInput!) {
-  createRepository(input: $input) {
-    repository { name visibility }
+const createRepoMutation = `mutation($name: String!, $visibility: Visibility!, $description: String) {
+  createRepository(name: $name, visibility: $visibility, description: $description) {
+    id name visibility
   }
 }`
 
@@ -222,39 +220,42 @@ func (c *Client) CreateRepo(ctx context.Context, in operations.RepoInput) (opera
 	}
 	var result struct {
 		CreateRepository struct {
-			Repository struct {
-				Name       string `json:"name"`
-				Visibility string `json:"visibility"`
-			} `json:"repository"`
+			ID         int    `json:"id"`
+			Name       string `json:"name"`
+			Visibility string `json:"visibility"`
 		} `json:"createRepository"`
 	}
 	username, err := c.meUsername(ctx)
 	if err != nil {
 		return operations.Repo{}, fmt.Errorf("creating repository: %w", err)
 	}
+	var desc any
+	if in.Description != "" {
+		desc = in.Description
+	}
 	if err := c.query(ctx, gitAPIBase, gqlRequest{
 		Query: createRepoMutation,
-		Variables: map[string]any{"input": map[string]any{
+		Variables: map[string]any{
 			"name":        in.Name,
-			"description": in.Description,
 			"visibility":  visibility,
-		}},
+			"description": desc,
+		},
 	}, &result); err != nil {
 		return operations.Repo{}, fmt.Errorf("creating repository: %w", err)
 	}
-	name := result.CreateRepository.Repository.Name
+	name := result.CreateRepository.Name
 	return operations.Repo{
 		Forge:    c.forgeLabelOrDefault(),
 		Instance: c.Name(),
 		FullName: username + "/" + name,
 		URL:      "https://git.sr.ht/~" + username + "/" + name,
-		Private:  result.CreateRepository.Repository.Visibility == "PRIVATE",
+		Private:  result.CreateRepository.Visibility == "PRIVATE",
 	}, nil
 }
 
-const updateRepoMutation = `mutation($input: UpdateRepositoryInput!) {
-  updateRepository(input: $input) {
-    repository { name visibility }
+const updateRepoMutation = `mutation($id: Int!, $input: RepoInput!) {
+  updateRepository(id: $id, input: $input) {
+    id name visibility
   }
 }`
 
@@ -273,42 +274,77 @@ func (c *Client) SetVisibility(ctx context.Context, fullName string, private boo
 }
 
 // updateRepo applies the given extra input fields to a repository via the
-// updateRepository mutation.
+// updateRepository mutation. extra holds RepoInput fields (name, visibility,
+// description, ...).
 func (c *Client) updateRepo(ctx context.Context, fullName string, extra map[string]any) (operations.Repo, error) {
 	owner, name, ok := splitHutName(fullName)
 	if !ok {
 		return operations.Repo{}, fmt.Errorf("invalid repository name %q", fullName)
 	}
-	input := map[string]any{"repo": "~" + owner + "/" + name}
-	for k, v := range extra {
-		input[k] = v
+	id, err := c.repositoryID(ctx, owner, name)
+	if err != nil {
+		return operations.Repo{}, fmt.Errorf("updating repository: %w", err)
 	}
 	var result struct {
 		UpdateRepository struct {
-			Repository struct {
-				Name       string `json:"name"`
-				Visibility string `json:"visibility"`
-			} `json:"repository"`
+			ID         int    `json:"id"`
+			Name       string `json:"name"`
+			Visibility string `json:"visibility"`
 		} `json:"updateRepository"`
 	}
 	if err := c.query(ctx, gitAPIBase, gqlRequest{
 		Query:     updateRepoMutation,
-		Variables: map[string]any{"input": input},
+		Variables: map[string]any{"id": id, "input": extra},
 	}, &result); err != nil {
 		return operations.Repo{}, fmt.Errorf("updating repository: %w", err)
 	}
-	repoName := result.UpdateRepository.Repository.Name
+	repoName := result.UpdateRepository.Name
 	return operations.Repo{
 		Forge:    c.forgeLabelOrDefault(),
 		Instance: c.Name(),
 		FullName: owner + "/" + repoName,
 		URL:      "https://git.sr.ht/~" + owner + "/" + repoName,
-		Private:  result.UpdateRepository.Repository.Visibility == "PRIVATE",
+		Private:  result.UpdateRepository.Visibility == "PRIVATE",
 	}, nil
 }
 
-const deleteRepoMutation = `mutation($input: DeleteRepositoryInput!) {
-  deleteRepository(input: $input) { id }
+// repositoryIDQuery fetches a repository ID by owner and name. User.repository
+// requires the owner's canonical name ("~user").
+const repositoryIDQuery = `query($username: String!, $name: String!) {
+  user(username: $username) {
+    repository(name: $name) { id name visibility }
+  }
+}`
+
+// repositoryID resolves the numeric repository ID required by the
+// updateRepository and deleteRepository mutations.
+func (c *Client) repositoryID(ctx context.Context, owner, name string) (int, error) {
+	var result struct {
+		User struct {
+			Repository *struct {
+				ID int `json:"id"`
+			} `json:"repository"`
+		} `json:"user"`
+	}
+	// The user(username:) argument takes the canonical "~user" form; fall
+	// back to the bare name if the canonical lookup misses.
+	for _, username := range []string{"~" + owner, owner} {
+		result.User.Repository = nil
+		if err := c.query(ctx, gitAPIBase, gqlRequest{
+			Query:     repositoryIDQuery,
+			Variables: map[string]any{"username": username, "name": name},
+		}, &result); err != nil {
+			return 0, err
+		}
+		if result.User.Repository != nil {
+			return result.User.Repository.ID, nil
+		}
+	}
+	return 0, fmt.Errorf("repository %q not found", owner+"/"+name)
+}
+
+const deleteRepoMutation = `mutation($id: Int!) {
+  deleteRepository(id: $id) { id }
 }`
 
 // DeleteRepo deletes a repository. fullName is user/name.
@@ -317,16 +353,18 @@ func (c *Client) DeleteRepo(ctx context.Context, fullName string) error {
 	if !ok {
 		return fmt.Errorf("invalid repository name %q", fullName)
 	}
+	id, err := c.repositoryID(ctx, owner, name)
+	if err != nil {
+		return fmt.Errorf("deleting repository: %w", err)
+	}
 	var result struct {
 		DeleteRepository struct {
-			ID string `json:"id"`
+			ID int `json:"id"`
 		} `json:"deleteRepository"`
 	}
 	if err := c.query(ctx, gitAPIBase, gqlRequest{
-		Query: deleteRepoMutation,
-		Variables: map[string]any{"input": map[string]any{
-			"repo": "~" + owner + "/" + name,
-		}},
+		Query:     deleteRepoMutation,
+		Variables: map[string]any{"id": id},
 	}, &result); err != nil {
 		return fmt.Errorf("deleting repository: %w", err)
 	}

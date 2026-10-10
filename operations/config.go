@@ -18,23 +18,17 @@ type Config struct {
 	Forgejo   ForgejoConfig   `toml:"forgejo"`
 	SourceHut SourceHutConfig `toml:"sourcehut"`
 	Bitbucket BitbucketConfig `toml:"bitbucket"`
-
-	// Instances holds additional instances of any forge type. Each entry must
-	// set Type (github, gitlab, forgejo, sourcehut, bitbucket) and Name.
-	Instances []Instance `toml:"instance"`
+	Instances []Instance      `toml:"instance"`
 }
 
-// Instance describes a single forge server/account. It is used for multiple
-// instances of the same forge type (e.g. two self-hosted GitLab servers) and
-// for user-named aliases of a built-in client (e.g. a Gitea server labelled
-// "gitea" but driven by the Forgejo client via Driver).
 type Instance struct {
-	Name     string `toml:"name"`
-	Type     string `toml:"type"`
-	Driver   string `toml:"driver"`
-	Token    string `toml:"token"`
-	URL      string `toml:"url"`
-	Username string `toml:"username"`
+	Name      string `toml:"name"`
+	Type      string `toml:"type"`
+	Driver    string `toml:"driver"`
+	Token     string `toml:"token"`
+	URL       string `toml:"url"`
+	Username  string `toml:"username"`
+	Workspace string `toml:"workspace"`
 }
 
 // knownDrivers is the set of values Driver may take. Keeping it private lets
@@ -67,21 +61,23 @@ type SourceHutConfig struct {
 }
 
 type BitbucketConfig struct {
-	Token    string `toml:"token"`
-	Username string `toml:"username"`
+	Token     string `toml:"token"`
+	Username  string `toml:"username"`
+	Workspace string `toml:"workspace"`
 }
 
 const (
-	EnvConfigPath        = "FORGIT_CONFIG"
-	EnvGitHubToken       = "FORGIT_GITHUB_TOKEN"
-	EnvGitLabToken       = "FORGIT_GITLAB_TOKEN"
-	EnvGitLabURL         = "FORGIT_GITLAB_URL"
-	EnvForgejoToken      = "FORGIT_FORGEJO_TOKEN"
-	EnvForgejoURL        = "FORGIT_FORGEJO_URL"
-	EnvSourceHutToken    = "FORGIT_SOURCEHUT_TOKEN"
-	EnvSourceHutUsername = "FORGIT_SOURCEHUT_USERNAME"
-	EnvBitbucketToken    = "FORGIT_BITBUCKET_TOKEN"
-	EnvBitbucketUsername = "FORGIT_BITBUCKET_USERNAME"
+	EnvConfigPath         = "FORGIT_CONFIG"
+	EnvGitHubToken        = "FORGIT_GITHUB_TOKEN"
+	EnvGitLabToken        = "FORGIT_GITLAB_TOKEN"
+	EnvGitLabURL          = "FORGIT_GITLAB_URL"
+	EnvForgejoToken       = "FORGIT_FORGEJO_TOKEN"
+	EnvForgejoURL         = "FORGIT_FORGEJO_URL"
+	EnvSourceHutToken     = "FORGIT_SOURCEHUT_TOKEN"
+	EnvSourceHutUsername  = "FORGIT_SOURCEHUT_USERNAME"
+	EnvBitbucketToken     = "FORGIT_BITBUCKET_TOKEN"
+	EnvBitbucketUsername  = "FORGIT_BITBUCKET_USERNAME"
+	EnvBitbucketWorkspace = "FORGIT_BITBUCKET_WORKSPACE"
 )
 
 func DefaultConfigPath() (string, error) {
@@ -218,6 +214,9 @@ func applyEnv(cfg *Config) {
 	if v := os.Getenv(EnvBitbucketUsername); v != "" {
 		cfg.Bitbucket.Username = v
 	}
+	if v := os.Getenv(EnvBitbucketWorkspace); v != "" {
+		cfg.Bitbucket.Workspace = v
+	}
 }
 
 // Enabled reports whether any forge has credentials configured.
@@ -249,7 +248,7 @@ func (c Config) All() []Instance {
 	add(Instance{Type: "gitlab", Name: "gitlab", Token: c.GitLab.Token, URL: c.GitLab.URL})
 	add(Instance{Type: "forgejo", Name: "forgejo", Token: c.Forgejo.Token, URL: c.Forgejo.URL})
 	add(Instance{Type: "sourcehut", Name: "sourcehut", Token: c.SourceHut.Token, Username: c.SourceHut.Username})
-	add(Instance{Type: "bitbucket", Name: "bitbucket", Token: c.Bitbucket.Token, Username: c.Bitbucket.Username})
+	add(Instance{Type: "bitbucket", Name: "bitbucket", Token: c.Bitbucket.Token, Username: c.Bitbucket.Username, Workspace: c.Bitbucket.Workspace})
 	for _, i := range c.Instances {
 		add(i)
 	}
